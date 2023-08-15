@@ -8,6 +8,9 @@
 #  ./scripts/lib/dashmate_temporary_reset_script.sh
 . ~/.evoenv
 
+exit 1
+echo "DANGER"
+
 SCRIPT_DIR=$(pwd)
 echo $SCRIPT_DIR
 # Remove stale contractIds
