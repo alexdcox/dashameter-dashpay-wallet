@@ -1,9 +1,8 @@
 import Dash from "dash";
-import { Client } from "dash/dist/src/SDK/Client/index";
 import { strict as assert } from "assert";
 import localforage from "localforage";
 
-let client: Client | undefined;
+let client: any | undefined;
 let identityId: string | undefined; // TODO replace string with Identifier
 let identity: any | undefined; // TODO replace any with Identity
 
@@ -94,6 +93,21 @@ const initClient = async function(clientOpts: any) {
   // assert(clientOpts.wallet, "Error: clientOpts is missing wallet config!");
 
   console.log("clientOpts :>> ", clientOpts);
+
+  clientOpts = {...clientOpts,
+    apps: {
+      dpns: {
+        contractId: 'GWRSAVFMjXx8HpQFaNJMqBV7MBgMK4br5UESsB4S31Ec'
+      }
+    },
+    wallet: {...clientOpts.wallet,
+      mnemonic: 'rival estate inside turn journey charge window rhythm marble audit amateur bus',
+      unsafeOptions: {
+        skipSynchronizationBeforeHeight: 874000,
+      }
+    }
+  }
+
 
   client = new Dash.Client(clientOpts);
 

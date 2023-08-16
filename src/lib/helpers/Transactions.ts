@@ -1,4 +1,4 @@
-import { Client } from "dash/dist/src/SDK/Client/index";
+import Dash from "dash";
 
 enum DIRECTION {
   SENT = "sent",
@@ -16,7 +16,7 @@ interface ResolvedTransaction {
   remoteAddress: string;
 }
 
-const resolveTransaction = function(client: Client, transaction: any) {
+const resolveTransaction = function(client: Dash.Client, transaction: any) {
   const outputs = transaction.outputs;
 
   console.log("outputs :>> ", outputs);
