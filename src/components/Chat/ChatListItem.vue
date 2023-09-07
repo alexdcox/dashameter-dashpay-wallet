@@ -1,78 +1,3 @@
-<template>
-  <ion-item>
-    <ion-avatar
-      slot="start"
-      class="avatar"
-      @click="router.push(`/profile/${chatListItem.friendOwnerId}`)"
-    >
-      <img :src="store.getters.getUserAvatar(chatListItem.friendOwnerId)" />
-    </ion-avatar>
-    <ion-label
-      @click="router.push(`/conversation/${chatListItem.friendOwnerId}`)"
-      :class="{
-        messagebold: chatListItem.direction === 'RECEIVED',
-      }"
-    >
-      <h1
-        :class="{
-          unlinked: chatListItem.friendshipState === 'UNLINKED',
-        }"
-      >
-        {{ truncateUserLabel(chatListItem.friendOwnerId) }}
-
-        <span style="font-weight: 400">
-          {{ truncateDisplayName(chatListItem.friendOwnerId) }}
-        </span>
-
-        <div class="message-time" :class="{ primary: !!newMsgCount }"></div>
-      </h1>
-      <p>
-        {{ chatListItem.lastMessage?.data.text }}
-        <!-- {{ chatListItem.lastMessage.data.request }} -->
-        <ion-chip
-          v-if="chatListItem.lastMessage?.data.amount"
-          :class="{
-            received: chatListItem.direction === 'RECEIVED',
-            sent: chatListItem.direction === 'SENT',
-            requested: chatListItem.lastMessage.data.request === 'open',
-          }"
-          >{{ duffsInDash(chatListItem.lastMessage?.data.amount) }} Dash
-          <div v-if="!chatListItem.lastMessage?.data.request">
-            <ion-icon
-              class="sent-receive-icon"
-              v-if="chatListItem.direction === 'RECEIVED'"
-              :src="require('/public/assets/icons/receiveDash.svg')"
-            />
-            <ion-icon
-              v-if="chatListItem.direction === 'SENT'"
-              class="sent-receive-icon"
-              :src="require('/public/assets/icons/sendDash.svg')"
-            />
-          </div>
-        </ion-chip>
-        <ion-badge v-if="newMsgCount > 0">{{ newMsgCount }}</ion-badge>
-        <ion-icon
-          v-if="hasNewTx && !chatListItem.lastMessage?.data.request"
-          class="dash-viewed"
-          :src="require('/public/assets/icons/D.svg')"
-        />
-        <ion-icon
-          v-if="hasNewTx && chatListItem.lastMessage?.data.request === 'open'"
-          class="dash-viewed"
-          :src="require('/public/assets/icons/requested.svg')"
-        />
-        <!-- v-if for edge case: don't show gray unlink D if it's a new Tx && you are unlinked. 
-        Once user sees the tx, display unlink D in place of new Tx D -->
-        <ion-icon
-          v-if="chatListItem.friendshipState === 'UNLINKED' && !hasNewTx"
-          class="unlink"
-          :src="require('/public/assets/icons/unlink.svg')"
-        ></ion-icon>
-      </p>
-    </ion-label>
-  </ion-item>
-</template>
-
 <script>
 import {
   IonItem,
@@ -84,14 +9,15 @@ import {
 } from "@ionic/vue";
 
 import { unlink } from "ionicons/icons";
-
 import { useRouter } from "vue-router";
-
 import { useStore } from "vuex";
-
 import { computed } from "vue";
-
 import useRates from "@/composables/rates";
+import SendDashSvg from '../../../public/assets/icons/sendDash.svg'
+import ReceiveDashSvg from '../../../public/assets/icons/receiveDash.svg'
+import DSvg from '../../../public/assets/icons/D.svg'
+import RequestedSvg from '../../../public/assets/icons/requested.svg'
+import UnlinkSvg from '../../../public/assets/icons/unlink.svg'
 
 export default {
   components: {
@@ -103,6 +29,15 @@ export default {
     IonIcon,
   },
   props: ["chatListItem"],
+  data() {
+    return {
+      SendDashSvg,
+      ReceiveDashSvg,
+      DSvg,
+      RequestedSvg,
+      UnlinkSvg,
+    }
+  },
   setup(props) {
     const store = useStore();
 
@@ -183,6 +118,82 @@ export default {
   },
 };
 </script>
+
+<template>
+  <ion-item>
+    <ion-avatar
+        slot="start"
+        class="avatar"
+        @click="router.push(`/profile/${chatListItem.friendOwnerId}`)"
+    >
+      <img :src="store.getters.getUserAvatar(chatListItem.friendOwnerId)" />
+    </ion-avatar>
+    <ion-label
+        @click="router.push(`/conversation/${chatListItem.friendOwnerId}`)"
+        :class="{
+        messagebold: chatListItem.direction === 'RECEIVED',
+      }"
+    >
+      <h1
+          :class="{
+          unlinked: chatListItem.friendshipState === 'UNLINKED',
+        }"
+      >
+        {{ truncateUserLabel(chatListItem.friendOwnerId) }}
+
+        <span style="font-weight: 400">
+          {{ truncateDisplayName(chatListItem.friendOwnerId) }}
+        </span>
+
+        <div class="message-time" :class="{ primary: !!newMsgCount }"></div>
+      </h1>
+      <p>
+        {{ chatListItem.lastMessage?.data.text }}
+        <!-- {{ chatListItem.lastMessage.data.request }} -->
+        <ion-chip
+            v-if="chatListItem.lastMessage?.data.amount"
+            :class="{
+            received: chatListItem.direction === 'RECEIVED',
+            sent: chatListItem.direction === 'SENT',
+            requested: chatListItem.lastMessage.data.request === 'open',
+          }"
+        >{{ duffsInDash(chatListItem.lastMessage?.data.amount) }} Dash
+          <div v-if="!chatListItem.lastMessage?.data.request">
+            <ion-icon
+                class="sent-receive-icon"
+                v-if="chatListItem.direction === 'RECEIVED'"
+                :src="ReceiveDashSvg"
+            />
+            <ion-icon
+                v-if="chatListItem.direction === 'SENT'"
+                class="sent-receive-icon"
+                :src="SendDashSvg"
+            />
+          </div>
+        </ion-chip>
+        <ion-badge v-if="newMsgCount > 0">{{ newMsgCount }}</ion-badge>
+        <ion-icon
+            v-if="hasNewTx && !chatListItem.lastMessage?.data.request"
+            class="dash-viewed"
+            :src="DSvg"
+        />
+        <ion-icon
+            v-if="hasNewTx && chatListItem.lastMessage?.data.request === 'open'"
+            class="dash-viewed"
+            :src="RequestedSvg"
+        />
+        <!-- v-if for edge case: don't show gray unlink D if it's a new Tx && you are unlinked.
+        Once user sees the tx, display unlink D in place of new Tx D -->
+        <ion-icon
+            v-if="chatListItem.friendshipState === 'UNLINKED' && !hasNewTx"
+            class="unlink"
+            :src="UnlinkSvg"
+        ></ion-icon>
+      </p>
+    </ion-label>
+  </ion-item>
+</template>
+
 
 <style scoped>
 .avatar {

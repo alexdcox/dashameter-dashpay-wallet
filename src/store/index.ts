@@ -1,8 +1,9 @@
 import { createStore } from "vuex";
-import { getClient } from "@/lib/DashClient";
-import { Storage } from "@capacitor/storage";
+import DashClient from "@/lib/Dash";
+import { Preferences } from "@capacitor/preferences";
 import { msgDate } from "@/lib/helpers/Date";
 import useWallet from "@/composables/wallet";
+import {ExtendedDocument} from '@dashevo/wasm-dpp'
 const { myTransactionHistory } = useWallet();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -223,18 +224,18 @@ const mutations = {
 
     // Add an item for legacy payments
     // TODO sort legacy payment item by most recent payment date
-    console.log(
-      "sortchatlist yTransactionHistory.value :>> ",
-      myTransactionHistory.value
-    );
-    chatList.push({
-      id: "legacy",
-      sortDate: new Date(myTransactionHistory.value[0].time * 1000),
-      direction: myTransactionHistory.value[0].type.toUpperCase(),
-      lastMessage: {
-        data: { amount: myTransactionHistory.value[0].to[0].satoshis },
-      },
-    });
+    console.log("sortchatlist yTransactionHistory.value :>> ", myTransactionHistory.value);
+    if (myTransactionHistory.value?.length) {
+      chatList.push({
+        id: "legacy",
+        sortDate: new Date(myTransactionHistory.value[0].time * 1000),
+        direction: myTransactionHistory.value[0].type.toUpperCase(),
+        lastMessage: {
+          data: { amount: myTransactionHistory.value[0].to[0].satoshis },
+        },
+      })
+    }
+
 
     // Sort the mixed msg and contact items
     // TODO sort contact items by payment dates
@@ -247,8 +248,8 @@ const mutations = {
   setAccountDPNS(state: any, accountDPNS: any) {
     state.accountDPNS = accountDPNS;
   },
-  setDPNS(state: any, dpnsDoc: any) {
-    state.dpns[dpnsDoc.ownerId.toString()] = dpnsDoc;
+  setDPNS(state: any, dpnsDoc: ExtendedDocument) {
+    state.dpns[dpnsDoc.getOwnerId().toString()] = dpnsDoc;
   },
   setWishName(state: any, wishName: string) {
     state.wishName = wishName;
@@ -352,7 +353,7 @@ const mutations = {
     // console.log("setDashpayProfiles", dashpayProfiles);
     dashpayProfiles.forEach((profile: any) => {
       // console.log("profile :>> ", profile);
-      state.dashpayProfiles[profile.ownerId.toString()] = profile;
+      state.dashpayProfiles[profile?.ownerId?.toString()] = profile;
     });
   },
 };
@@ -380,7 +381,7 @@ const actions = {
   },
   async loadLastSeenChatTimestamps(context: any) {
     console.log("loadLastSeenChatTimestamps");
-    const readResult = await Storage.get({
+    const readResult = await Preferences.get({
       key: `lastSeenChatTimestamps_${context.getters.myLabel}`,
     });
     console.log(
@@ -395,7 +396,7 @@ const actions = {
     }
   },
   async saveLastSeenChatTimestamps(context: any) {
-    await Storage.set({
+    await Preferences.set({
       key: `lastSeenChatTimestamps_${context.getters.myLabel}`,
       value: JSON.stringify(context.state.chats.lastSeenTimestampByOwnerId),
     });
@@ -407,8 +408,7 @@ const actions = {
 
     if (context.state.chats.msgsByDocumentId[msgId]) return; // If cache exists, don't hit DAPI again
 
-    const client = getClient();
-
+    const client = await DashClient.client()
     const msg = await client?.platform?.documents.get("dashpayWallet.chat", {
       where: [
         ["toOwnerId", "==", ownerId],
@@ -423,10 +423,11 @@ const actions = {
     if (!ownerId)
       throw new Error("resolveUserFeatures Error: No ownerId given");
 
-    const client = getClient();
+    // const client = DashClient.load()
 
     async function resolveChatAndRequests() {
-      const [result] = await client?.platform?.documents.get(
+      const client = await DashClient.client()
+      const [result] = await client.platform?.documents?.get(
         "dashpayWallet.chat",
         {
           where: [["$ownerId", "==", ownerId.toString()]],
@@ -438,9 +439,7 @@ const actions = {
     }
 
     const features = { chatAndRequests: false };
-
     features.chatAndRequests = await resolveChatAndRequests();
-
     console.log("resolveUserFeatures features :>> ", features);
 
     // if (result) {
@@ -462,7 +461,7 @@ const actions = {
   ) {
     console.log("fetchDashpayProfiles", ownerIds);
 
-    const client = getClient();
+    // const client = DashClient.load()
 
     const filteredOwnerIds = forceRefresh
       ? ownerIds
@@ -474,11 +473,12 @@ const actions = {
               !(ownerId.toString() in context.state.dashpayProfiles)
           );
 
-    const profilePromises = filteredOwnerIds.map((ownerId: any) =>
-      client?.platform?.documents.get("dashpay.profile", {
+    const client = await DashClient.client()
+    const profilePromises = filteredOwnerIds.map((ownerId: any) => {
+      return client?.platform?.documents.get("dashpay.profile", {
         where: [["$ownerId", "==", ownerId.toString()]],
       })
-    );
+    })
 
     const results = (await Promise.all(profilePromises))
       .map((x: any) => x[0])
@@ -489,7 +489,9 @@ const actions = {
     if (results.length > 0) {
       context.commit("setDashpayProfiles", results);
       context.commit("sortChatList"); // TODO optimize performance
-      context.dispath("resolveContactCapibilities");
+
+      // TODO: adc: This an 'unknown action type'
+      // context.dispatch("resolveContactCapabilities");
     }
 
     return results; // TODO return cached entries as well
@@ -499,12 +501,13 @@ const actions = {
 
     if (!myOwnerId) return; // Don't sync while we are not logged in
 
-    const client = getClient();
+    // const client = DashClient.load()
 
     console.log("context.state :>> ", context.state);
 
     const { lastTimestamp } = context.state.chats;
 
+    const client = await DashClient.client()
     const promiseSent = client?.platform?.documents.get("dashpayWallet.chat", {
       where: [
         ["$ownerId", "==", myOwnerId],
@@ -552,7 +555,7 @@ const actions = {
   // async syncSocialGraph(context: any) {},
   async fetchContactRequestsSent(context: any, ownerId: any) {
     // Used to parse the social graph
-    const client = getClient();
+    // const client = DashClient.load()
 
     const sentByOwnerId = state.socialGraph.sentByOwnerId as any;
 
@@ -566,6 +569,7 @@ const actions = {
     //   ],
     //   orderBy: [["$createdAt", "asc"]],
     // });
+    const client = await DashClient.client()
     const resultSent = await client?.platform?.documents.get(
       "dashpay.contactRequest",
       {
@@ -604,7 +608,7 @@ const actions = {
   async syncContactRequests(context: any) {
     if (!context.state.accountDPNS) return; // Don't sync if we are not logged in
 
-    const client = getClient();
+    // const client = getClient();
 
     console.log("context.state :>> ", context.state);
 
@@ -612,7 +616,7 @@ const actions = {
       lastTimestampReceived,
       lastTimestampSent,
     } = context.state.contactRequests;
-
+    const client = await DashClient.client()
     const promiseSent = client?.platform?.documents.get(
       "dashpay.contactRequest",
       {
@@ -692,7 +696,7 @@ const actions = {
       return;
     }
 
-    const client = getClient();
+    const client = await DashClient.client()
     const [dpnsDoc] = await client?.platform?.names.resolveByRecord(
       "dashUniqueIdentityId",
       ownerId
@@ -737,7 +741,7 @@ const getters = {
     );
   },
   getUserLabel: (state: any) => (ownerId: string) => {
-    return (state.dpns as any)[ownerId]?.data.label ?? ownerId.substr(0, 6);
+    return (state.dpns as any)[ownerId]?.data?.label ?? ownerId.substr(0, 6);
   },
   getUserFeatures: (state: any) => (ownerId: string) => {
     return (state.dpns as any)[ownerId]?._features ?? {};
@@ -745,7 +749,7 @@ const getters = {
   getUserDisplayName: (state: any) => (ownerId: string) => {
     return (
       (state.dashpayProfiles as any)[ownerId]?.data.displayName ??
-      (state.dpns as any)[ownerId]?.data.label ??
+      (state.dpns as any)[ownerId]?.data?.label ??
       ownerId.substr(0, 6)
     );
   },

@@ -1,22 +1,49 @@
+<script>
+import { IonIcon } from "@ionic/vue";
+import { checkmarkDoneOutline } from "ionicons/icons";
+import UserSentSvg from '../../../public/assets/icons/userSent.svg'
+import PartnerSentSvg from '../../../public/assets/icons/partnerSent.svg'
+
+// import { reactive } from "vue";
+
+export default {
+  props: ["direction", "amount"],
+  components: {
+    IonIcon,
+  },
+  data() {
+    return {
+      UserSentSvg,
+      PartnerSentSvg,
+    }
+  },
+  setup() {
+    return {
+      checkmarkDoneOutline,
+    };
+  },
+};
+</script>
+
 <template>
   <div
-    class="chatbubble_txn_small"
-    style=""
-    :class="{
+      class="chatbubble_txn_small"
+      style=""
+      :class="{
       user: direction.toUpperCase() === 'SENT',
       chat_partner_txn: direction.toUpperCase() === 'RECEIVED',
     }"
   >
     <div class="sameline">
       <ion-icon
-        v-if="direction.toUpperCase() === 'SENT'"
-        class="dash_icon_small"
-        :src="require('/public/assets/icons/userSent.svg')"
+          v-if="direction.toUpperCase() === 'SENT'"
+          class="dash_icon_small"
+          :src="UserSentSvg"
       ></ion-icon>
       <ion-icon
-        v-else-if="direction.toUpperCase() === 'RECEIVED'"
-        class="dash_icon_small"
-        :src="require('/public/assets/icons/partnerSent.svg')"
+          v-else-if="direction.toUpperCase() === 'RECEIVED'"
+          class="dash_icon_small"
+          :src="PartnerSentSvg"
       ></ion-icon>
 
       <div class="leftpadding">
@@ -30,31 +57,13 @@
         <!-- {{ msg.createdAt.getHours() }}:{{ msg.createdAt.getMinutes() }} -->
       </div>
       <ion-icon
-        class="align_checkmark checkmark_color"
-        :icon="checkmarkDoneOutline"
+          class="align_checkmark checkmark_color"
+          :icon="checkmarkDoneOutline"
       >
       </ion-icon>
     </div>
   </div>
 </template>
-
-<script>
-import { IonIcon } from "@ionic/vue";
-import { checkmarkDoneOutline } from "ionicons/icons";
-// import { reactive } from "vue";
-
-export default {
-  props: ["direction", "amount"],
-  components: {
-    IonIcon,
-  },
-  setup() {
-    return {
-      checkmarkDoneOutline,
-    };
-  },
-};
-</script>
 
 <style scoped>
 .chatbubble_txn_small {

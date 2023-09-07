@@ -59,11 +59,11 @@ import {
   IonLoading,
 } from "@ionic/vue";
 
-import { getClient, setClientIdentity } from "@/lib/DashClient";
+import Dash from "@/lib/Dash";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 
-import { updateAccount, createAccountId } from "@/lib/helpers/AccountStorage";
+import AccountStorage from "@/lib/helpers/AccountStorage";
 
 export default {
   name: "FinishRegistration",
@@ -84,46 +84,34 @@ export default {
     IonLoading,
   },
   setup() {
-    const client = getClient();
-
     const router = useRouter();
-
     const store = useStore();
-
     const formName = ref(store.state.wishName || "");
-
     const registrationMessage = ref("Starting to Finish!");
-
     const showLoader = ref(false);
-
     const errorMessage = ref("");
 
     const registerName = async () => {
+      const client = await Dash.client()
+      const account = await Dash.account()
+
       showLoader.value = true;
 
       try {
-        let identity: any;
-
         registrationMessage.value = "Many Duffs make a Dash";
 
-        const [
-          identityId,
-        ] = await (client.account as any).identities.getIdentityIds();
+        // TODO: we need to have an identity now
+        // Which also means, maybe we're trying to create an identity on load when
+        // we shouldn't be!
 
-        console.log("existing identityId :>> ", identityId);
+        let identity = await Dash.identity()
+        if (identity === undefined) {
+          identity = await Dash.registerIdentity()
+        }
 
-        if (identityId) {
-          registrationMessage.value = "Fetching existing identity";
-
-          identity = await client.platform?.identities.get(identityId);
-        } else {
-          registrationMessage.value = "Creating new identity";
-
-          identity = await client.platform?.identities.register();
-
-          identity = await client.platform?.identities.get(identity.getId()); // TODO remove this line once identities.register returns correct identity.balance
-
-          setClientIdentity(identity);
+        if (identity === undefined) {
+          // TODO: this shouldn't happen, deleteme
+          debugger
         }
 
         registrationMessage.value = "Registering name";
@@ -134,24 +122,36 @@ export default {
           identity
         );
 
+        console.log('nameRegistration', nameRegistration)
+
         store.commit("setAccountDPNS", nameRegistration.toJSON());
         store.commit("setDPNS", nameRegistration);
 
-        const accountId = createAccountId(
-          client.wallet!.exportWallet().toString()
-        );
+        // AccountStorage.store()
+
+        AccountStorage.store({
+          accountDPNS: undefined,
+          encMnemonic: "",
+          id: "",
+          wishName: ""
+
+        })
+
+        const accountId = createAccountId(client.wallet!.exportWallet().toString());
+        console.log('accountId', accountId)
 
         await updateAccount({
           accountDPNS: nameRegistration.toJSON(),
           id: accountId,
         });
 
-        console.log("nameRegistration >> ", nameRegistration.toJSON());
+        console.log("nameRegistration", nameRegistration.toJSON());
 
-        router.push("/home");
+        await router.push("/home");
       } catch (e) {
-        console.error(e);
-        errorMessage.value = e.message;
+        const b: any = e
+        console.error(b);
+        errorMessage.value = b?.message;
       } finally {
         showLoader.value = false;
       }

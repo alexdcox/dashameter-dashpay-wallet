@@ -1,116 +1,3 @@
-<template>
-  <ion-page>
-    <ion-content class="ion-padding">
-      <ion-toolbar>
-        <ion-buttons
-          ><ion-back-button
-            class="back"
-            default-href="/home"
-            :icon="arrowBack"
-          ></ion-back-button
-        ></ion-buttons>
-        <ion-avatar class="profileavatar"
-          ><img :src="getUserAvatar(friendOwnerId)"
-        /></ion-avatar>
-      </ion-toolbar>
-
-      <p class="userinfo">
-        {{ getUserLabel(friendOwnerId) }}
-      </p>
-      <p class="userdisplayname">
-        {{ getUserDisplayName(friendOwnerId) }}
-      </p>
-      <p class="statusmessage">
-        {{ getUserPublicMessage(friendOwnerId) }}
-      </p>
-
-      <div class="icons">
-        <ion-icon
-          class="pay"
-          :src="require('/public/assets/icons/chat.svg')"
-          @click="
-            router.push({
-              path: `/conversation/${friendOwnerId}`,
-            })
-          "
-        ></ion-icon>
-        <ion-icon
-          class="pay"
-          :src="require('/public/assets/icons/sendHeader.svg')"
-          @click="
-            router.push({
-              path: `/conversation/${friendOwnerId}`,
-              query: { pay: 'true' },
-            })
-          "
-        ></ion-icon>
-        <ion-icon
-          class="pay"
-          :src="require('/public/assets/icons/QR.svg')"
-          @click="openQRCodeModal"
-        ></ion-icon>
-      </div>
-
-      <div class="lowericons">
-        <p class="userdisplayname">
-          <ion-icon
-            class="joined"
-            :src="require('/public/assets/icons/dashp.svg')"
-          ></ion-icon>
-          Joined {{ formatDate(new Date()) }}
-          <!-- {{ new Date().getMonth() + 1 }}
-          {{ new Date().getFullYear() }} -->
-        </p>
-        <p class="userdisplayname">
-          <ion-icon class="joined" :icon="people"></ion-icon>
-          Friends since {{ friendsDate }}
-        </p>
-      </div>
-
-      <ion-toolbar class="searchbar">
-        <ion-searchbar
-          v-model="filterInput"
-          placeholder="Search for users"
-        ></ion-searchbar>
-      </ion-toolbar>
-
-      <ion-toolbar>
-        <ion-buttons class="tabfeatures ion-text-capitalize">
-          <ion-button
-            fill="clear"
-            class="tabfeatures ion-text-capitalize"
-            :class="{ selected: tabSelected === 'friends' }"
-            @click="tabState('friends')"
-          >
-            <ion-label>Friends </ion-label>
-          </ion-button>
-
-          <ion-button
-            fill="clear"
-            class="tabfeatures ion-text-capitalize"
-            :class="{ selected: tabSelected === 'sharedFriends' }"
-            @click="tabState('sharedFriends')"
-          >
-            <ion-label>Shared Friends </ion-label>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-
-      <friends
-        v-if="tabSelected === 'friends'"
-        :filteredUserFriends="filteredUserFriends"
-        style="margin-top: 430px; z-index: 1"
-      ></friends>
-
-      <sharedFriends
-        v-if="tabSelected === 'sharedFriends'"
-        :sharedFriends="sharedFriends"
-        style="margin-top: 430px; z-index: 1"
-      ></sharedFriends>
-    </ion-content>
-  </ion-page>
-</template>
-
 <script lang="ts">
 import { computed, watch, ref } from "vue";
 import { search } from "ss-search";
@@ -138,7 +25,10 @@ import { useStore } from "vuex";
 import ContactQRCodeModal from "@/components/Contact/ContactQRCodeModal.vue";
 import { people } from "ionicons/icons";
 import { onMounted } from "vue";
-
+import ChatSvg from '../../public/assets/icons/chat.svg'
+import SendHeaderSvg from '../../public/assets/icons/sendHeader.svg'
+import QRSvg from '../../public/assets/icons/QR.svg'
+import DashpSvg from '../../public/assets/icons/dashp.svg'
 export default {
   name: "ContactProfile",
   components: {
@@ -154,6 +44,14 @@ export default {
     IonSearchbar,
     friends,
     sharedFriends,
+  },
+  data() {
+    return {
+      ChatSvg,
+      SendHeaderSvg,
+      QRSvg,
+      DashpSvg,
+    }
   },
   setup() {
     // const client = getClient();
@@ -323,6 +221,119 @@ export default {
   },
 };
 </script>
+
+<template>
+  <ion-page>
+    <ion-content class="ion-padding">
+      <ion-toolbar>
+        <ion-buttons
+        ><ion-back-button
+            class="back"
+            default-href="/home"
+            :icon="arrowBack"
+        ></ion-back-button
+        ></ion-buttons>
+        <ion-avatar class="profileavatar"
+        ><img :src="getUserAvatar(friendOwnerId)"
+        /></ion-avatar>
+      </ion-toolbar>
+
+      <p class="userinfo">
+        {{ getUserLabel(friendOwnerId) }}
+      </p>
+      <p class="userdisplayname">
+        {{ getUserDisplayName(friendOwnerId) }}
+      </p>
+      <p class="statusmessage">
+        {{ getUserPublicMessage(friendOwnerId) }}
+      </p>
+
+      <div class="icons">
+        <ion-icon
+            class="pay"
+            :src="ChatSvg"
+            @click="
+            router.push({
+              path: `/conversation/${friendOwnerId}`,
+            })
+          "
+        ></ion-icon>
+        <ion-icon
+            class="pay"
+            :src="SendHeaderSvg"
+            @click="
+            router.push({
+              path: `/conversation/${friendOwnerId}`,
+              query: { pay: 'true' },
+            })
+          "
+        ></ion-icon>
+        <ion-icon
+            class="pay"
+            :src="QRSvg"
+            @click="openQRCodeModal"
+        ></ion-icon>
+      </div>
+
+      <div class="lowericons">
+        <p class="userdisplayname">
+          <ion-icon
+              class="joined"
+              :src="DashpSvg"
+          ></ion-icon>
+          Joined {{ formatDate(new Date()) }}
+          <!-- {{ new Date().getMonth() + 1 }}
+          {{ new Date().getFullYear() }} -->
+        </p>
+        <p class="userdisplayname">
+          <ion-icon class="joined" :icon="people"></ion-icon>
+          Friends since {{ friendsDate }}
+        </p>
+      </div>
+
+      <ion-toolbar class="searchbar">
+        <ion-searchbar
+            v-model="filterInput"
+            placeholder="Search for users"
+        ></ion-searchbar>
+      </ion-toolbar>
+
+      <ion-toolbar>
+        <ion-buttons class="tabfeatures ion-text-capitalize">
+          <ion-button
+              fill="clear"
+              class="tabfeatures ion-text-capitalize"
+              :class="{ selected: tabSelected === 'friends' }"
+              @click="tabState('friends')"
+          >
+            <ion-label>Friends </ion-label>
+          </ion-button>
+
+          <ion-button
+              fill="clear"
+              class="tabfeatures ion-text-capitalize"
+              :class="{ selected: tabSelected === 'sharedFriends' }"
+              @click="tabState('sharedFriends')"
+          >
+            <ion-label>Shared Friends </ion-label>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+
+      <friends
+          v-if="tabSelected === 'friends'"
+          :filteredUserFriends="filteredUserFriends"
+          style="margin-top: 430px; z-index: 1"
+      ></friends>
+
+      <sharedFriends
+          v-if="tabSelected === 'sharedFriends'"
+          :sharedFriends="sharedFriends"
+          style="margin-top: 430px; z-index: 1"
+      ></sharedFriends>
+    </ion-content>
+  </ion-page>
+</template>
 
 <style scoped>
 .profileavatar {

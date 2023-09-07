@@ -6,7 +6,7 @@ import CreateWallet from "@/views/CreateWallet.vue";
 import RecoverWallet from "@/views/RecoverWallet.vue";
 import FinishRegistration from "@/views/FinishRegistration.vue";
 import RedeemInvite from "@/views/RedeemInvite.vue";
-import Home from "@/views/Home.vue";
+import Home from "@/views/HomeView.vue";
 import SendDash from "@/views/SendDash.vue";
 import ReceiveDash from "@/views/ReceiveDash.vue";
 import ChooseName from "@/views/ChooseName.vue";
@@ -21,21 +21,22 @@ import ChooseAccount from "@/views/ChooseAccount.vue";
 import EditProfile from "@/views/EditProfile.vue";
 import Device from "@/views/Device.vue";
 
-import Autologin from "@/views/Autologin.vue"; // TODO deploy: remove, this is for dev only
+import Autologin from "@/views/Autologin.vue";
+import {useStore} from "vuex"; // TODO deploy: remove, this is for dev only
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/device",
+    redirect: "/welcome",
+  },
+  {
+    path: "/:catchAll(.*)",
+    redirect: "/welcome",
   },
   // {
-  //   path: "/:catchAll(.*)",
-  //   redirect: "/welcome",
+  //   path: "/device",
+  //   component: Device,
   // },
-  {
-    path: "/device",
-    component: Device,
-  },
   {
     path: "/:catchAll(.*)",
     redirect: "/welcome",
@@ -148,8 +149,23 @@ const routes: Array<RouteRecordRaw> = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
+
+router.beforeEach((to, _, next) => {
+  const dontRedirect = [
+    '/',
+    '/welcome',
+    '/chooseaccount',
+  ]
+  if (dontRedirect.includes(to.path)) {
+    return next()
+  }
+  if (!useStore().state.accountDPNS) {
+    return next({path: "/chooseaccount"});
+  }
+  return next()
+})
 
 export default router;

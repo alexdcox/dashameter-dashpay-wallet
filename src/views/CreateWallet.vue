@@ -40,8 +40,8 @@ import {
   IonTextarea,
 } from "@ionic/vue";
 
-import { initClient, getClient, getClientOpts } from "@/lib/DashClient";
-import { Client } from "dash/dist/src/SDK/Client/index";
+import DashClient from "@/lib/Dash";
+import { Client } from "dash";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -61,25 +61,14 @@ export default {
     IonLabel,
   },
   setup() {
-    console.log(process.env.VUE_APP_DAPIADDRESSES);
-    const clientOpts = getClientOpts(null);
-
-    let client: Client;
-
+    let client: InstanceType<typeof Client>;
     const mnemonic = ref("");
-
     const balance = ref<number>();
 
     onMounted(async () => {
-      await sleep(450); // Don't block the viewport
-      await initClient(clientOpts);
-
-      client = getClient();
-
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      // await sleep(450); // Don't block the viewport
+      client = await DashClient.client()
       mnemonic.value = client.wallet!.exportWallet().toString();
-
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       balance.value = client.account!.getTotalBalance();
     });
 

@@ -1,6 +1,6 @@
 const Dash = require("dash");
 const secp256k1 = require("secp256k1/elliptic");
-const dashcore = require("@dashevo/dashcore-lib");
+import * as Dashcore from '@dashevo/dashcore-lib'
 const dashpaycrypto = require("./dashpay-crypto");
 
 const senderMnemonic =

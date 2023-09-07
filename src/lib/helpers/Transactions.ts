@@ -1,4 +1,4 @@
-import Dash from "dash";
+import {Client} from "dash";
 
 enum DIRECTION {
   SENT = "sent",
@@ -16,7 +16,7 @@ interface ResolvedTransaction {
   remoteAddress: string;
 }
 
-const resolveTransaction = function(client: Dash.Client, transaction: any) {
+const resolveTransaction = function(client: Client, transaction: any) {
   const outputs = transaction.outputs;
 
   console.log("outputs :>> ", outputs);
@@ -31,8 +31,8 @@ const resolveTransaction = function(client: Dash.Client, transaction: any) {
   };
 
   outputs.forEach((output: any) => {
+    // TODO: Hard-coded network should be variable
     const address = output.script.toAddress("testnet").toString();
-
     const isMine = client.wallet!.storage.searchAddress(address, false); // TODO 2 parameter should be optional
 
     console.log("isMine :>> ", isMine);

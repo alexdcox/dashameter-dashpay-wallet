@@ -1,34 +1,3 @@
-<template>
-  <ion-list>
-    <ion-item
-      button
-      @click="popoverController.dismiss() && setReplyToId()"
-      lines="none"
-      class="height"
-    >
-      <ion-icon
-        slot="start"
-        :src="require('/public/assets/icons/reply.svg')"
-        class="reply"
-      ></ion-icon>
-      <ion-label>Reply</ion-label>
-    </ion-item>
-    <ion-item
-      button
-      @click="popoverController.dismiss() && copyToClipboard()"
-      lines="none"
-      class="height"
-    >
-      <ion-icon
-        slot="start"
-        :src="require('/public/assets/icons/copy.svg')"
-        class="copy"
-      ></ion-icon>
-      <ion-label>Copy</ion-label>
-    </ion-item>
-  </ion-list>
-</template>
-
 <script lang="ts">
 import {
   IonList,
@@ -39,6 +8,8 @@ import {
 } from "@ionic/vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
+import ReplySvg from '../../../public/assets/icons/reply.svg'
+import CopySvg from '../../../public/assets/icons/copy.svg'
 
 export default {
   name: "ReplyMenu",
@@ -49,7 +20,12 @@ export default {
     IonLabel,
     IonIcon,
   },
-
+  data() {
+      return {
+        ReplySvg,
+        CopySvg,
+      }
+  },
   setup(props: any) {
     const store = useStore();
     const router = useRouter();
@@ -91,6 +67,37 @@ export default {
   },
 };
 </script>
+
+<template>
+  <ion-list>
+    <ion-item
+        button
+        @click="popoverController.dismiss() && setReplyToId()"
+        lines="none"
+        class="height"
+    >
+      <ion-icon
+          slot="start"
+          :src="ReplySvg"
+          class="reply"
+      ></ion-icon>
+      <ion-label>Reply</ion-label>
+    </ion-item>
+    <ion-item
+        button
+        @click="popoverController.dismiss() && copyToClipboard()"
+        lines="none"
+        class="height"
+    >
+      <ion-icon
+          slot="start"
+          :src="CopySvg"
+          class="copy"
+      ></ion-icon>
+      <ion-label>Copy</ion-label>
+    </ion-item>
+  </ion-list>
+</template>
 
 <style scoped>
 .reply {

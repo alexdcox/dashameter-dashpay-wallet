@@ -1,11 +1,6 @@
-import { ref, computed, unref } from "vue";
-import { strict as assert } from "assert";
-import { getClient, getClientIdentity, getClientOpts } from "../lib/DashClient";
-import { useStore } from "vuex";
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-let client: any;
+import {computed} from "vue";
+import Dash from "@/lib/Dash";
+import {useStore} from "vuex";
 
 let isRefreshLoopActive = false;
 
@@ -17,27 +12,22 @@ export default function useContacts() {
   );
 
   const getUserDisplayName = computed(() => store.getters.getUserDisplayName);
-
   const getUserLabel = computed(() => store.getters.getUserLabel);
-
   const getUserAvatar = computed(() => store.getters.getUserAvatar);
-
   const getMyFriends = computed(() => store.getters.getMyFriends);
-
   const getSuggestedFriends = computed(() => store.getters.getSuggestedFriends);
-
   const myLabel = computed(() => store.getters.myLabel);
-
   const myAvatar = computed(() => store.getters.myAvatar);
-
   const myDisplayName = computed(() => store.getters.myDisplayName);
-
   const myPublicMessage = computed(() => store.getters.myPublicMessage);
-
   const myOwnerId = computed(() => store.getters.myOwnerId);
 
   const storeDashpayProfile = async (profile: any) => {
+    const client = await Dash.client()
+    const identity = await Dash.identity()
+
     const existingProfile = store.state.dashpayProfiles[myOwnerId.value];
+
     interface DocumentBatch {
       create: any[];
       replace: any[];
@@ -45,40 +35,24 @@ export default function useContacts() {
     }
 
     const documentBatch: DocumentBatch = {
-      create: [], // Document(s) to create
-      replace: [], // Document(s) to update
-      delete: [], // Document(s) to delete
+      create: [],
+      replace: [],
+      delete: [],
     };
 
     if (existingProfile) {
-      // console.log("existingProfile :>> ", existingProfile);
-
-      existingProfile.data = { ...existingProfile.data, ...profile };
-
-      // console.log("existingProfile :>> ", existingProfile);
-
+      existingProfile.data = {...existingProfile.data, ...profile};
       documentBatch.replace.push(existingProfile);
     } else {
-      const document = await getClient().platform?.documents.create(
-        "dashpay.profile",
-        getClientIdentity(),
-        profile
-      );
+      const document = await client.platform?.documents.create("dashpay.profile", identity, profile);
       documentBatch.create.push(document);
     }
 
-    // console.log("documentBatch :>> ", documentBatch);
-
-    // Sign and submit the document(s)
-    const result = await getClient().platform?.documents.broadcast(
-      documentBatch,
-      getClientIdentity()
-    );
-    // console.log("result storeDashpayProfile :>> ", result);
+    const result = await client.platform?.documents.broadcast(documentBatch, identity);
     const ownerId = result.ownerId;
-    const resultProfileDocument = { ...result.transitions[0], ownerId };
+    const resultProfileDocument = {...result.transitions[0], ownerId};
 
-    // store.commit("setDashpayProfiles", [resultProfileDocument]);
+// store.commit("setDashpayProfiles", [resultProfileDocument]);
     store.dispatch("fetchDashpayProfiles", {
       ownerIds: [ownerId.toString()],
       forceRefresh: true,
@@ -88,35 +62,26 @@ export default function useContacts() {
 
   async function syncContactRequestsLoop() {
     if (!isRefreshLoopActive) return;
-    // console.log("syncContactRequestsLoop");
+// console.log("syncContactRequestsLoop");
 
     await store.dispatch("syncContactRequests");
 
-    Object.entries(store.state.contactRequests.sent).forEach(
-      async ([myOwnerId, contactRequest]) => {
-        await store.dispatch(
+    Object.entries(store.state.contactRequests.sent).map(async ([myOwnerId, contactRequest]) => {
+        return await store.dispatch(
           "fetchContactRequestsSent",
           (contactRequest as any).data.toUserId.toString()
-        );
+        )
       }
-    );
+    )
 
-    await sleep(10000);
-    syncContactRequestsLoop();
+    // await sleep(10000);
+    // await syncContactRequestsLoop();
   }
 
-  function startSyncContactRequests() {
-    assert(
-      !isRefreshLoopActive,
-      "Error: syncConttactRequests refresh loop already running!"
-    );
-
-    // console.log("startSyncContactRequests");
-    if (!client) client = getClient();
-    // console.log("got a client startSyncContactRequests", isRefreshLoopActive);
+  async function startSyncContactRequests() {
+    if (isRefreshLoopActive) return
     isRefreshLoopActive = true;
-
-    syncContactRequestsLoop();
+    // await syncContactRequestsLoop();
   }
 
   function stopSyncContactRequestsLoop() {

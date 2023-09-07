@@ -1,28 +1,3 @@
-<template>
-  <ion-item :account="account" class="ion-no-padding" button>
-    <ion-avatar slot="start">
-      <img
-        :src="getUserAvatar(account.accountDPNS?.$ownerId)"
-        :class="{ animate: areProfilesLoading }"
-      />
-    </ion-avatar>
-    <ion-label class="ion-nowrap">
-      <div style="position: relative">
-        <ion-icon
-          v-if="loggedInAccount"
-          :src="require('/public/assets/icons/account.svg')"
-        ></ion-icon>
-        <h2 class="accountname">
-          {{ accountLabel }}
-        </h2>
-        <h3 class="displayname">
-          {{ accountDisplayName }}
-        </h3>
-      </div>
-    </ion-label>
-  </ion-item>
-</template>
-
 <script lang="ts">
 import { IonLabel, IonItem, IonAvatar, IonIcon } from "@ionic/vue";
 
@@ -32,6 +7,7 @@ import { computed } from "vue";
 import { useStore } from "vuex";
 
 import useContacts from "@/composables/contacts";
+import AccountSvg from '../../../public/assets/icons/account.svg'
 
 export default {
   name: "AccountItem",
@@ -42,31 +18,28 @@ export default {
     IonAvatar,
     IonIcon,
   },
+  data() {
+    return {AccountSvg}
+  },
   setup(props: any) {
     const store = useStore();
     const { getUserDisplayName, getUserAvatar } = useContacts();
 
     const loggedInAccount: any = computed(
-      () =>
-        props.account.accountDPNS &&
-        props.account.accountDPNS?.$ownerId ===
-          store.state.accountDPNS?.$ownerId
+      () => props.account?.identityId
     );
 
     const accountLabel: any = computed(() => {
-      if (props.account.accountDPNS) {
-        return props.account.accountDPNS.label;
-      } else {
-        return props.account.wishName;
-      }
+      return props.account?.name;
     });
 
     const accountDisplayName: any = computed(() => {
-      if (props.account.accountDPNS) {
-        return getUserDisplayName.value(props.account.accountDPNS.$ownerId);
-      } else {
-        return "(unregistered)";
-      }
+      return props.account?.identityId
+      // if () {
+      //   return getUserDisplayName.value(props.account.identityId);
+      // } else {
+      //   return "(unregistered)";
+      // }
     });
 
     return {
@@ -79,6 +52,24 @@ export default {
   },
 };
 </script>
+
+<template>
+  <ion-item :account="account" class="ion-no-padding" button>
+    <ion-avatar slot="start">
+      <img
+          :src="getUserAvatar(account.accountDPNS?.$ownerId)"
+          :class="{ animate: areProfilesLoading }"
+      />
+    </ion-avatar>
+    <ion-label class="ion-nowrap">
+      <div style="position: relative">
+        <ion-icon v-if="loggedInAccount" :src="AccountSvg"></ion-icon>
+        <h2 class="accountname"> {{ accountLabel }} </h2>
+        <h3 class="displayname"> {{ accountDisplayName }} </h3>
+      </div>
+    </ion-label>
+  </ion-item>
+</template>
 
 <style scoped>
 .accountname {

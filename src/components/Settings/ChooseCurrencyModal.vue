@@ -1,43 +1,3 @@
-<template>
-  <ion-header>
-    <ion-toolbar>
-      <ion-buttons slot="start"
-        ><ion-button @click="modalController.dismiss()"
-          ><ion-icon :icon="closeOutline" class="close"></ion-icon></ion-button
-      ></ion-buttons>
-      <ion-title class="headername centerheader">Currency </ion-title>
-    </ion-toolbar>
-  </ion-header>
-  <ion-content class="ion-padding">
-    <ion-toolbar style="margin-top: -16px">
-      <ion-searchbar v-model="searchString"></ion-searchbar>
-    </ion-toolbar>
-    <!-- <ion-list class="noindent"> -->
-    <ion-list>
-      <ion-item
-        lines="none"
-        v-for="pair in filteredPairs"
-        :key="pair.pair"
-        button
-        @click="choose(pair.fiatSymbol)"
-        class="ion-justify-content-center"
-      >
-        <div
-          :class="`currency-flag currency-flag-${pair.fiatSymbol.toLowerCase()}`"
-        ></div>
-        <ion-label class="ion-padding-start">
-          {{ pair.fiatSymbol }}
-          <ion-icon
-            v-if="pair.fiatSymbol === getFiatSymbol"
-            :src="require('/public/assets/icons/account.svg')"
-            class="active"
-          ></ion-icon>
-        </ion-label>
-      </ion-item>
-    </ion-list>
-  </ion-content>
-</template>
-
 <script lang="ts">
 import {
   IonContent,
@@ -57,8 +17,8 @@ import { defineComponent, ref, onMounted, computed } from "vue";
 import useRates from "@/composables/rates";
 import { closeOutline } from "ionicons/icons";
 import { useStore } from "vuex";
-import { Storage } from "@capacitor/storage";
-
+import { Preferences } from "@capacitor/preferences";
+import AccountSvg from '../../../public/assets/icons/account.svg'
 export default defineComponent({
   name: "ViewRequestModal",
   emits: ["chooseCurrency"],
@@ -76,6 +36,11 @@ export default defineComponent({
     IonToolbar,
     IonSearchbar,
   },
+  data() {
+    return {
+      AccountSvg
+    }
+  },
   setup(props, { emit }) {
     const { refreshRate, fetchPairs, getFiatSymbol } = useRates();
 
@@ -85,7 +50,7 @@ export default defineComponent({
     const choose = async (fiatSymbol: string) => {
       emit("chooseCurrency", fiatSymbol);
       commit("setFiatSymbol", fiatSymbol);
-      const writeResult = await Storage.set({
+      const writeResult = await Preferences.set({
         key: `fiatSymbol_${getters.myLabel}`,
         value: getFiatSymbol.value,
       });
@@ -122,6 +87,46 @@ export default defineComponent({
   },
 });
 </script>
+
+<template>
+  <ion-header>
+    <ion-toolbar>
+      <ion-buttons slot="start"
+      ><ion-button @click="modalController.dismiss()"
+      ><ion-icon :icon="closeOutline" class="close"></ion-icon></ion-button
+      ></ion-buttons>
+      <ion-title class="headername centerheader">Currency </ion-title>
+    </ion-toolbar>
+  </ion-header>
+  <ion-content class="ion-padding">
+    <ion-toolbar style="margin-top: -16px">
+      <ion-searchbar v-model="searchString"></ion-searchbar>
+    </ion-toolbar>
+    <!-- <ion-list class="noindent"> -->
+    <ion-list>
+      <ion-item
+          lines="none"
+          v-for="pair in filteredPairs"
+          :key="pair.pair"
+          button
+          @click="choose(pair.fiatSymbol)"
+          class="ion-justify-content-center"
+      >
+        <div
+            :class="`currency-flag currency-flag-${pair.fiatSymbol.toLowerCase()}`"
+        ></div>
+        <ion-label class="ion-padding-start">
+          {{ pair.fiatSymbol }}
+          <ion-icon
+              v-if="pair.fiatSymbol === getFiatSymbol"
+              :src="AccountSvg"
+              class="active"
+          ></ion-icon>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</template>
 
 <style scoped>
 ion-searchbar {

@@ -81,7 +81,7 @@
 
 <script>
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const Dashcore = require("@dashevo/dashcore-lib");
+import * as Dashcore from '@dashevo/dashcore-lib'
 const Unit = Dashcore.Unit;
 
 import ChatSmallTxn from "@/components/Chat/ChatSmallTxn.vue";

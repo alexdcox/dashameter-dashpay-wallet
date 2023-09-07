@@ -7,12 +7,7 @@ import { onMounted, ref, computed } from "vue";
 
 import { IonPage } from "@ionic/vue";
 
-import {
-  initClient,
-  getClient,
-  getClientOpts,
-  getClientIdentity,
-} from "@/lib/DashClient";
+import DashClient from "@/lib/Dash";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 
@@ -27,14 +22,15 @@ export default {
     const store = useStore();
 
     onMounted(async () => {
-      const clientOpts = getClientOpts(process.env.VUE_APP_USERMNEMONIC!);
-
-      console.log(
-        "autologin with mnemonic :>> ",
-        process.env.VUE_APP_USERMNEMONIC!
-      );
-
-      const client = await initClient(clientOpts);
+      // const clientOpts = getClientOpts(import.meta.env.VUE_APP_USERMNEMONIC!);
+      //
+      // console.log(
+      //   "autologin with mnemonic :>> ",
+      //   import.meta.env.VUE_APP_USERMNEMONIC!
+      // );
+      //
+      // const client = await initClient(clientOpts);
+      const client = DashClient.client()
 
       const account = client.account as any;
 

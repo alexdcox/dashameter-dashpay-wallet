@@ -1,152 +1,3 @@
-<template>
-  <div v-if="!receivedContactRequest" class="respond respondtext">
-    <ion-icon
-      :src="require('/public/assets/icons/dashd-purple.svg')"
-      class="D"
-    ></ion-icon>
-    You can send Dash once your friend responds
-  </div>
-  <IncomingRequests
-    v-if="receivedContactRequest && !sentContactRequest && !isSendingAccept"
-    @acceptAndSayHi="acceptAndSayHi"
-  >
-  </IncomingRequests>
-  <div v-if="store.getters.getActiveReplyToId(friendOwnerId)">
-    <div class="replying leftborder">
-      <ion-icon
-        @click="resetReplyToId(friendOwnerId)"
-        :icon="closeOutline"
-        class="x"
-      ></ion-icon>
-      <div class="replyheader">
-        Replying to
-        {{ friendOrYou }}
-
-        <!-- {{ getUserLabel(getActiveReplyToMsgOwnerId(friendOwnerId)) }} -->
-      </div>
-
-      <chat-txn
-        v-if="
-          (store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )?.data.amount &&
-            store.getters.getChatMsgById(
-              store.getters.getActiveReplyToId(friendOwnerId)
-            )?.data.text) ||
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )?.data.request === 'open'
-        "
-        :msg="
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )
-        "
-        :friendOwnerId="friendOwnerId"
-        :isReply="true"
-      >
-      </chat-txn>
-
-      <chat-small-txn
-        class="singleline"
-        v-if="
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )?.data.amount &&
-          !store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )?.data.text &&
-          !store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )?.data.request
-        "
-        :msg="
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )
-        "
-        :friendOwnerId="friendOwnerId"
-        :isReply="true"
-      >
-      </chat-small-txn>
-
-      <request-response
-        class="singleline large"
-        {{
-        store.getters.getChatMsgById(
-        store.getters.getActiveReplyToId(friendOwnerId)
-        )
-        }}
-        v-if="
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )?.data.request === 'decline' ||
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )?.data.request === 'accept'
-        "
-        :msg="
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId)
-          )
-        "
-        :friendOwnerId="friendOwnerId"
-        :isReply="true"
-      ></request-response>
-
-      <div
-        class="replymessage"
-        v-if="
-          !store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId),
-            friendOwnerId
-          )?.data.amount &&
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId),
-            friendOwnerId
-          )?.data.text
-        "
-      >
-        {{
-          store.getters.getChatMsgById(
-            store.getters.getActiveReplyToId(friendOwnerId),
-            friendOwnerId
-          )?.data?.text
-        }}
-      </div>
-    </div>
-  </div>
-  <div class="flex ion-nowrap ion-padding-start">
-    <ion-input
-      placeholder="Messsage... "
-      v-model="chatText"
-      @keyup.enter="sendChatWrapper"
-    >
-      <ion-icon class="emoji" :icon="happyOutline"></ion-icon>
-      <ion-icon class="attach" :icon="attachOutline"></ion-icon>
-    </ion-input>
-    <div v-if="getUserLabel(friendOwnerId) != myLabel" class="flex">
-      <ion-icon
-        v-if="chatText === ''"
-        class="dash_button"
-        :src="
-          receivedContactRequest
-            ? require('/public/assets/icons/userSent.svg')
-            : require('/public/assets/icons/userSent_disabled.svg')
-        "
-        @click="showSendRequestPopup"
-      ></ion-icon>
-      <ion-icon
-        v-else
-        class="dash_button"
-        @click="sendChatWrapper"
-        :src="require('/public/assets/icons/sending.svg')"
-      ></ion-icon>
-    </div>
-    <div v-else class="ion-padding-end"></div>
-  </div>
-</template>
-
 <script>
 import { useStore } from "vuex";
 
@@ -162,6 +13,10 @@ import IncomingRequests from "@/components/TransactionModals/IncomingRequests.vu
 import ChatTxn from "@/components/Chat/ChatTxn.vue";
 import ChatSmallTxn from "@/components/Chat/ChatSmallTxn.vue";
 import RequestResponse from "@/components/TransactionModals/RequestResponse.vue";
+import DashdPurpleSvg from '../../../public/assets/icons/dashd-purple.svg'
+import UserSentSvg from '../../../public/assets/icons/userSent.svg'
+import UserSentDisabledSvg from '../../../public/assets/icons/userSent_disabled.svg'
+import SendingSvg from '../../../public/assets/icons/sending.svg'
 
 export default {
   props: ["receivedContactRequest", "sentContactRequest", "friendOwnerId"],
@@ -173,6 +28,14 @@ export default {
     ChatTxn,
     ChatSmallTxn,
     RequestResponse,
+  },
+  data() {
+    return {
+      DashdPurpleSvg,
+      UserSentSvg,
+      UserSentDisabledSvg,
+      SendingSvg,
+    }
   },
   setup(props, context) {
     const chatText = ref("");
@@ -239,6 +102,152 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div v-if="!receivedContactRequest" class="respond respondtext">
+    <ion-icon
+        :src="DashdPurpleSvg"
+        class="D"
+    ></ion-icon>
+    You can send Dash once your friend responds
+  </div>
+  <IncomingRequests
+      v-if="receivedContactRequest && !sentContactRequest && !isSendingAccept"
+      @acceptAndSayHi="acceptAndSayHi"
+  >
+  </IncomingRequests>
+  <div v-if="store.getters.getActiveReplyToId(friendOwnerId)">
+    <div class="replying leftborder">
+      <ion-icon
+          @click="resetReplyToId(friendOwnerId)"
+          :icon="closeOutline"
+          class="x"
+      ></ion-icon>
+      <div class="replyheader">
+        Replying to
+        {{ friendOrYou }}
+
+        <!-- {{ getUserLabel(getActiveReplyToMsgOwnerId(friendOwnerId)) }} -->
+      </div>
+
+      <chat-txn
+          v-if="
+          (store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )?.data.amount &&
+            store.getters.getChatMsgById(
+              store.getters.getActiveReplyToId(friendOwnerId)
+            )?.data.text) ||
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )?.data.request === 'open'
+        "
+          :msg="
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )
+        "
+          :friendOwnerId="friendOwnerId"
+          :isReply="true"
+      >
+      </chat-txn>
+
+      <chat-small-txn
+          class="singleline"
+          v-if="
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )?.data.amount &&
+          !store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )?.data.text &&
+          !store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )?.data.request
+        "
+          :msg="
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )
+        "
+          :friendOwnerId="friendOwnerId"
+          :isReply="true"
+      >
+      </chat-small-txn>
+
+      <request-response
+          class="singleline large"
+          {{
+          store.getters.getChatMsgById(
+          store.getters.getActiveReplyToId(friendOwnerId)
+          )
+          }}
+          v-if="
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )?.data.request === 'decline' ||
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )?.data.request === 'accept'
+        "
+          :msg="
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId)
+          )
+        "
+          :friendOwnerId="friendOwnerId"
+          :isReply="true"
+      ></request-response>
+
+      <div
+          class="replymessage"
+          v-if="
+          !store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId),
+            friendOwnerId
+          )?.data.amount &&
+          store.getters.getChatMsgById(
+            store.getters.getActiveReplyToId(friendOwnerId),
+            friendOwnerId
+          )?.data.text
+        "
+      >
+        {{
+          store.getters.getChatMsgById(
+              store.getters.getActiveReplyToId(friendOwnerId),
+              friendOwnerId
+          )?.data?.text
+        }}
+      </div>
+    </div>
+  </div>
+  <div class="flex ion-nowrap ion-padding-start">
+    <ion-input
+        placeholder="Messsage... "
+        v-model="chatText"
+        @keyup.enter="sendChatWrapper"
+    >
+      <ion-icon class="emoji" :icon="happyOutline"></ion-icon>
+      <ion-icon class="attach" :icon="attachOutline"></ion-icon>
+    </ion-input>
+    <div v-if="getUserLabel(friendOwnerId) != myLabel" class="flex">
+      <ion-icon
+          v-if="chatText === ''"
+          class="dash_button"
+          :src="receivedContactRequest ? UserSentSvg : UserSentDisabledSvg"
+          @click="showSendRequestPopup"
+      ></ion-icon>
+      <ion-icon
+          v-else
+          class="dash_button"
+          @click="sendChatWrapper"
+          :src="SendingSvg"
+      ></ion-icon>
+    </div>
+    <div v-else class="ion-padding-end"></div>
+  </div>
+</template>
+
 
 <style scoped>
 ion-input {

@@ -1,95 +1,59 @@
-import { Storage } from "@capacitor/storage";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { sha256 } = require("@dashevo/dashcore-lib/lib/crypto/hash");
+import {Preferences} from "@capacitor/preferences";
+import crypto from "crypto";
 
-interface LocalAccount {
-  wishName?: string;
-  encMnemonic: string;
-  accountDPNS?: any;
-  id: string;
+export class LocalAccount {
+  public name: string | undefined;
+  public isNameRegistered = false;
+  public encMnemonic: string | undefined;
+  public identityId: string | undefined;
+
+  constructor(o: any) {
+    this.name = o.name
+    this.isNameRegistered = o.isNameRegistered
+    this.encMnemonic = o.encMnemonic
+    this.identityId = o.identityId
+  }
+
+  id(): string {
+    if (this.encMnemonic === undefined) {
+      throw 'Cannot return id for local account without mnemonic'
+    }
+    return crypto.createHash("sha256").update(this.encMnemonic).digest("base64")
+  }
 }
 
-interface LocalAccountUpdate {
-  accountDPNS: any;
-  id: string;
+export default class AccountStorage {
+  public static async store(account: LocalAccount): Promise<boolean> {
+    console.log('[AccountStorage] Store account', account)
+    if (!(account instanceof LocalAccount)) {
+      account = new LocalAccount(account)
+    }
+    const existingAccounts = await this.load()
+    console.log("[AccountStorage] storedAccounts: ", existingAccounts);
+    const accounts = {...existingAccounts, [account.id()]: account}
+    await Preferences.set({key: "accounts", value: JSON.stringify(accounts)});
+    return true
+  }
+
+  public static async list(): Promise<LocalAccount[]> {
+    const existingAccounts = await this.load()
+    return Array.from(existingAccounts.values())
+  }
+
+  private static async load(): Promise<Map<string, LocalAccount>> {
+    const accounts = new Map<string, LocalAccount>()
+    try {
+      const storedAccountsJson: any = (await Preferences.get({key: "accounts"}))?.value;
+      if (storedAccountsJson) {
+        const storedAccounts = JSON.parse(storedAccountsJson)
+        Object.entries(storedAccounts).forEach(([id, accountI]) => {
+          const account: any = accountI
+          accounts.set(id, new LocalAccount(account))
+        })
+      }
+    } catch(e) {
+      // do nothing
+    }
+    return accounts
+  }
 }
-
-const updateAccount = async (accountUpdate: LocalAccountUpdate) => {
-  let accounts = [];
-
-  // Read stored accounts
-  const readResult = await Storage.get({ key: "accounts" });
-
-  console.log("readResult :>> ", readResult);
-
-  if (readResult.value) accounts = JSON.parse(readResult.value);
-
-  // Update existing account
-  let accountUpdated = false;
-
-  accounts.forEach(function(el: LocalAccount, i: number) {
-    if (el.id === accountUpdate.id) {
-      accounts[i] = {
-        encMnemonic: el.encMnemonic, // Keep encMnemonic
-        id: el.id,
-        accountDPNS: accountUpdate.accountDPNS, // set accountDPNS while dropping wishName
-      };
-      accountUpdated = true;
-    }
-  });
-
-  if (!accountUpdated) throw "LocalAccount does not exist in storage.";
-
-  const writeResult = await Storage.set({
-    key: "accounts",
-    value: JSON.stringify(accounts),
-  });
-
-  console.log("result :>> ", writeResult);
-  return writeResult;
-};
-const storeAccount = async (account: LocalAccount) => {
-  // Don't store account if neither the dpns entry or the wishname is provided
-  if (!account.accountDPNS && !account.wishName) return;
-
-  let accounts = [];
-
-  // Read stored accounts
-  const readResult = await Storage.get({ key: "accounts" });
-
-  console.log("readResult :>> ", readResult);
-
-  if (readResult.value) accounts = JSON.parse(readResult.value);
-
-  // Overwrite existing account
-  let accountUpdated = false;
-
-  accounts.forEach(function(el: LocalAccount, i: number) {
-    if (el.id === account.id) {
-      accounts[i] = account;
-      accountUpdated = true;
-    }
-  });
-
-  // Add new account
-  if (!accountUpdated) accounts.push(account);
-
-  await Storage.set({
-    key: "accounts",
-    value: JSON.stringify(accounts),
-  });
-
-  return;
-};
-
-const getAccounts = async () => {
-  const readResult = await Storage.get({ key: "accounts" });
-
-  return readResult.value ? JSON.parse(readResult.value) : null;
-};
-
-const createAccountId = (mnemonic: string) => {
-  return sha256(Buffer.from(mnemonic)).toString("base64"); // TODO security review required
-};
-
-export { getAccounts, storeAccount, createAccountId, updateAccount };

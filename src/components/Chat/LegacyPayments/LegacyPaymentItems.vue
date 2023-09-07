@@ -52,10 +52,10 @@ export default {
 
     const transactionHistoryWithMeta = computed(() => {
       const chatsWithMeta = [];
-      const txs = myTransactionHistory.value.slice().reverse();
+      const txs = myTransactionHistory?.value?.slice().reverse();
       for (let i = 0; i < txs.length; i++) {
         const transaction = txs[i];
-        console.log("transaction", transaction);
+        // console.log("transaction", transaction);
         let chipDate = msgDate(transaction.time * 1000);
 
         const previousTransaction: any = chatsWithMeta[i - 1];
@@ -63,10 +63,10 @@ export default {
           ? msgDate(previousTransaction?.time * 1000)
           : undefined;
 
-        console.log("chipDate :>> ", chipDate);
-        console.log("previousChipDate :>> ", previousChipDate);
-        console.log("chatsWithMeta :>> ", chatsWithMeta);
-        console.log("previousTransaction :>> ", previousTransaction);
+        // console.log("chipDate :>> ", chipDate);
+        // console.log("previousChipDate :>> ", previousChipDate);
+        // console.log("chatsWithMeta :>> ", chatsWithMeta);
+        // console.log("previousTransaction :>> ", previousTransaction);
 
         if (previousChipDate === chipDate) {
           chipDate = "";
@@ -77,7 +77,7 @@ export default {
           _chipDate: chipDate,
         });
       }
-      console.log("chatsWithMeta", chatsWithMeta);
+      // console.log("chatsWithMeta", chatsWithMeta);
       return chatsWithMeta;
     });
 

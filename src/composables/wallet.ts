@@ -1,24 +1,17 @@
-import { ref, computed } from "vue";
-import { strict as assert } from "assert";
-import { getClient } from "../lib/DashClient";
-import { resolveTransaction, DIRECTION } from "@/lib/helpers/Transactions";
+import {computed, ref} from "vue";
+import Dash from "@/lib/Dash";
 import useRates from "@/composables/rates";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const Dashcore = require("@dashevo/dashcore-lib");
-const Unit = Dashcore.Unit;
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-let client: any;
+import {Unit} from '@dashevo/dashcore-lib'
+import {debounce} from "@/lib/Util";
 
 let isRefreshLoopActive = false;
-
+let refreshLoopInterval: any
 const myBalance = ref(0);
-
 const myTransactionHistory = ref();
 
 export default function useWallet() {
-  const { getFiatSymbol, getFiatRate } = useRates();
+  const {getFiatSymbol, getFiatRate} = useRates();
   const myDashBalance = computed(() =>
     Unit.fromSatoshis(myBalance.value).toBTC()
   );
@@ -30,25 +23,16 @@ export default function useWallet() {
     ).toFixed(2);
   });
 
-  function refreshBalance() {
-    myBalance.value = getClient().account!.getTotalBalance();
-    console.log("balance.value :>> ", myBalance.value);
-  }
-
   async function refreshTransactionHistory() {
-    console.log(
-      "getClient().account!.getTransactions() :>> ",
-      getClient().account!.getTransactions()
-    );
-    myTransactionHistory.value = await (getClient()
-      .account! as any).getTransactionHistory();
+    const account = await Dash.account()
+
 
     //   .map((tx: any) => {
     //   if (tx.time === -1) tx.time = 999999999; // TODO remove this hack when unconfirmed time correction is merged upstream
     //   return tx;
     // });
 
-    console.log("transactionHistory.value :>> ", myTransactionHistory.value);
+
 
     //     .map((tx: any) => {
     //     console.log("tx", tx);
@@ -83,25 +67,28 @@ export default function useWallet() {
 
   async function refreshWalletDataLoop() {
     if (!isRefreshLoopActive) return;
-    console.log("refreshWalletDataLoop");
-    refreshBalance();
-    refreshTransactionHistory();
-    await sleep(2000);
-    refreshWalletDataLoop();
+    // console.log("refreshWalletDataLoop");
+
+    const account = await Dash.account()
+    myBalance.value = account?.getTotalBalance();
+    // console.log("balance.value :>> ", myBalance.value);
+
+    myTransactionHistory.value = account.getTransactionHistory();
+    // console.log("transactionHistory.value :>> ", myTransactionHistory.value);
   }
 
-  function startRefreshWalletDataLoop() {
+  async function startRefreshWalletDataLoop() {
     // assert(!isRefreshLoopActive, "Error: Wallet refresh loop already running!");
     if (isRefreshLoopActive) return;
-
-    console.log("startRefreshWalletDataLoop");
     isRefreshLoopActive = true;
-
-    refreshWalletDataLoop();
+    console.log("[wallet] START DATA LOOP");
+    refreshLoopInterval = setInterval(refreshWalletDataLoop, 3000)
   }
 
   function stopRefreshWalletDataLoop() {
+    console.log("[wallet] STOP DATA LOOP");
     isRefreshLoopActive = false;
+    clearInterval(refreshLoopInterval)
   }
 
   return {

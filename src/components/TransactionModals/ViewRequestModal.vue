@@ -1,168 +1,13 @@
-<template>
-  <ion-content class="ion-padding">
-    <div class="flex ion-nowrap ion-padding-bottom">
-      <ion-icon :icon="closeOutline" class="close" @click="cancel"></ion-icon>
-      <div v-if="flows() === 'inflow'" class="title green flex ion-nowrap">
-        <ion-icon
-          class="header-icon"
-          :src="require('/public/assets/icons/requestHeader.svg')"
-        />
-        {{ title }}
-      </div>
-      <div v-else class="title purple flex ion-nowrap">
-        <ion-icon
-          class="header-icon"
-          :src="require('/public/assets/icons/sendHeader.svg')"
-        />
-        {{ title }}
-      </div>
-    </div>
-    <div
-      class="transaction"
-      :class="{
-        outflow: flows() === 'outflow',
-        inflow: flows() === 'inflow',
-      }"
-    >
-      <MyFriend
-        v-if="flows() === 'inflow'"
-        :sendRequestDirection="msg._direction"
-        :friendOwnerId="friendOwnerId"
-      ></MyFriend>
-      <MySelf
-        v-if="flows() === 'outflow'"
-        :amount="duffsInDash(msg.data.amount)"
-        :sendRequestDirection="msg._direction"
-        :newDashBalance="newDashBalance"
-      ></MySelf>
-      <div class="line" />
-      <MySelf
-        v-if="flows() === 'inflow'"
-        :amount="duffsInDash(msg.data.amount)"
-        :sendRequestDirection="msg._direction"
-        :newDashBalance="newDashBalance"
-      ></MySelf>
-      <MyFriend
-        v-if="flows() === 'outflow'"
-        :sendRequestDirection="msg._direction"
-        :friendOwnerId="friendOwnerId"
-      ></MyFriend>
-      <ion-icon
-        class="arrow"
-        :src="require('/public/assets/icons/arrow_down.svg')"
-      ></ion-icon>
-    </div>
-
-    <!-- only show if request is open && outflow (i.e. a received request) && newDashBalance < 0 -->
-    <span
-      class="funds"
-      v-if="openRequest() && flows() === 'outflow' && newDashBalance < 0"
-      >Not enough funds to pay this request.</span
-    >
-    <div class="swap-container">
-      <Accept
-        :amount="duffsInDash(msg.data.amount)"
-        :fiatAmount="msg.data.fiatAmount"
-        :direction="msg._direction"
-      >
-      </Accept>
-    </div>
-
-    <div class="message-text" v-if="msg.data.text">
-      {{
-        msg._direction === "RECEIVED"
-          ? getUserLabel(friendOwnerId) + "'s Request Message:"
-          : "Your Request Message:"
-      }}
-    </div>
-    <ion-textarea
-      class="show-message"
-      readonly
-      :value="msg.data.text"
-    ></ion-textarea>
-    <!-- TODO hard-coded address for now | display actual dash address once L1 functionality is added -->
-    <div
-      class="centerheader"
-      v-if="
-        !msg.data.request ||
-        getRequestByReplyToId(msg.id.toString())?.data.request === 'accept' ||
-        getRequestByReplyToId(msg.id.toString())?.data.request === 'decline'
-      "
-    >
-      <ion-label class="address">Xcu5iYBH...FHrFVdYu</ion-label>
-      <ion-icon
-        :icon="copyOutline"
-        class="copyicon"
-        @click="copyToClipboard()"
-      ></ion-icon>
-    </div>
-  </ion-content>
-  <ion-footer class="ion-no-border ion-padding">
-    <ion-toolbar>
-      <!-- show Decline/Send buttons only if request is received and open -->
-      <div v-if="msg.data.request">
-        <div
-          v-if="
-            msg._direction === 'RECEIVED' &&
-            getRequestByReplyToId(msg.id.toString())?.data.request !==
-              'accept' &&
-            getRequestByReplyToId(msg.id.toString())?.data.request !== 'decline'
-          "
-          class="flex ion-nowrap"
-        >
-          <ion-chip class="decline" @click="declineRequestWrapper"
-            ><span class="request-text purple"> Decline</span></ion-chip
-          >
-          <ion-chip
-            class="send"
-            @click="sendRequestAmount"
-            :disabled="newDashBalance < 0"
-            ><span class="send-text request-text"> Send</span></ion-chip
-          >
-        </div>
-        <!-- show Cancel request button only if you sent a request and it's still open -->
-        <div
-          v-if="msg._direction === 'SENT' && openRequest()"
-          class="flex ion-nowrap"
-        >
-          <ion-chip class="cancelit" expand="block"
-            ><span class="cancel-text"> Cancel Request</span></ion-chip
-          >
-        </div>
-      </div>
-      <!-- Open explorer to view completed transaction if it's not a request or if the request is closed -->
-      <div
-        v-if="
-          !msg.data.request ||
-          getRequestByReplyToId(msg.id.toString())?.data.request === 'accept' ||
-          getRequestByReplyToId(msg.id.toString())?.data.request === 'decline'
-        "
-        class="flex ion-justify-content-center"
-      >
-        <a target="_blank" href="https://insight.dash.org/insight/">
-          <ion-chip class="explorer">
-            <span class="explorer-text">Open explorer</span></ion-chip
-          >
-        </a>
-      </div>
-    </ion-toolbar>
-  </ion-footer>
-</template>
-
 <script lang="ts">
 import useWallet from "@/composables/wallet";
 import useRates from "@/composables/rates";
 import useChats from "@/composables/chats";
 import useContacts from "@/composables/contacts";
-
 import MySelf from "@/components/TransactionModals/MySelf.vue";
 import MyFriend from "@/components/TransactionModals/MyFriend.vue";
 import Accept from "@/components/TransactionModals/Accept.vue";
-
 import { useRouter } from "vue-router";
-
 import { copyOutline } from "ionicons/icons";
-
 import {
   IonContent,
   IonIcon,
@@ -173,9 +18,11 @@ import {
   modalController,
 } from "@ionic/vue";
 import { ref, defineComponent, computed } from "vue";
-
 import { arrowDownOutline, closeOutline } from "ionicons/icons";
 import { useStore } from "vuex";
+import RequestHeaderSvg from '../../../public/assets/icons/requestHeader.svg'
+import SendHeaderSvg from '../../../public/assets/icons/sendHeader.svg'
+import ArrowDownSvg from '../../../public/assets/icons/arrow_down.svg'
 
 export default defineComponent({
   props: ["msg", "initSendRequestDirection", "friendOwnerId"],
@@ -189,6 +36,13 @@ export default defineComponent({
     MySelf,
     MyFriend,
     Accept,
+  },
+  data() {
+    return {
+      RequestHeaderSvg,
+      SendHeaderSvg,
+      ArrowDownSvg,
+    }
   },
   setup(props, { emit }) {
     const { myBalance } = useWallet();
@@ -342,6 +196,157 @@ export default defineComponent({
   },
 });
 </script>
+
+<template>
+  <ion-content class="ion-padding">
+    <div class="flex ion-nowrap ion-padding-bottom">
+      <ion-icon :icon="closeOutline" class="close" @click="cancel"></ion-icon>
+      <div v-if="flows() === 'inflow'" class="title green flex ion-nowrap">
+        <ion-icon
+            class="header-icon"
+            :src="RequestHeaderSvg"
+        />
+        {{ title }}
+      </div>
+      <div v-else class="title purple flex ion-nowrap">
+        <ion-icon
+            class="header-icon"
+            :src="SendHeaderSvg"
+        />
+        {{ title }}
+      </div>
+    </div>
+    <div
+        class="transaction"
+        :class="{
+        outflow: flows() === 'outflow',
+        inflow: flows() === 'inflow',
+      }"
+    >
+      <MyFriend
+          v-if="flows() === 'inflow'"
+          :sendRequestDirection="msg._direction"
+          :friendOwnerId="friendOwnerId"
+      ></MyFriend>
+      <MySelf
+          v-if="flows() === 'outflow'"
+          :amount="duffsInDash(msg.data.amount)"
+          :sendRequestDirection="msg._direction"
+          :newDashBalance="newDashBalance"
+      ></MySelf>
+      <div class="line" />
+      <MySelf
+          v-if="flows() === 'inflow'"
+          :amount="duffsInDash(msg.data.amount)"
+          :sendRequestDirection="msg._direction"
+          :newDashBalance="newDashBalance"
+      ></MySelf>
+      <MyFriend
+          v-if="flows() === 'outflow'"
+          :sendRequestDirection="msg._direction"
+          :friendOwnerId="friendOwnerId"
+      ></MyFriend>
+      <ion-icon
+          class="arrow"
+          :src="ArrowDownSvg"
+      ></ion-icon>
+    </div>
+
+    <!-- only show if request is open && outflow (i.e. a received request) && newDashBalance < 0 -->
+    <span
+        class="funds"
+        v-if="openRequest() && flows() === 'outflow' && newDashBalance < 0"
+    >Not enough funds to pay this request.</span
+    >
+    <div class="swap-container">
+      <Accept
+          :amount="duffsInDash(msg.data.amount)"
+          :fiatAmount="msg.data.fiatAmount"
+          :direction="msg._direction"
+      >
+      </Accept>
+    </div>
+
+    <div class="message-text" v-if="msg.data.text">
+      {{
+        msg._direction === "RECEIVED"
+            ? getUserLabel(friendOwnerId) + "'s Request Message:"
+            : "Your Request Message:"
+      }}
+    </div>
+    <ion-textarea
+        class="show-message"
+        readonly
+        :value="msg.data.text"
+    ></ion-textarea>
+    <!-- TODO hard-coded address for now | display actual dash address once L1 functionality is added -->
+    <div
+        class="centerheader"
+        v-if="
+        !msg.data.request ||
+        getRequestByReplyToId(msg.id.toString())?.data.request === 'accept' ||
+        getRequestByReplyToId(msg.id.toString())?.data.request === 'decline'
+      "
+    >
+      <ion-label class="address">Xcu5iYBH...FHrFVdYu</ion-label>
+      <ion-icon
+          :icon="copyOutline"
+          class="copyicon"
+          @click="copyToClipboard()"
+      ></ion-icon>
+    </div>
+  </ion-content>
+  <ion-footer class="ion-no-border ion-padding">
+    <ion-toolbar>
+      <!-- show Decline/Send buttons only if request is received and open -->
+      <div v-if="msg.data.request">
+        <div
+            v-if="
+            msg._direction === 'RECEIVED' &&
+            getRequestByReplyToId(msg.id.toString())?.data.request !==
+              'accept' &&
+            getRequestByReplyToId(msg.id.toString())?.data.request !== 'decline'
+          "
+            class="flex ion-nowrap"
+        >
+          <ion-chip class="decline" @click="declineRequestWrapper"
+          ><span class="request-text purple"> Decline</span></ion-chip
+          >
+          <ion-chip
+              class="send"
+              @click="sendRequestAmount"
+              :disabled="newDashBalance < 0"
+          ><span class="send-text request-text"> Send</span></ion-chip
+          >
+        </div>
+        <!-- show Cancel request button only if you sent a request and it's still open -->
+        <div
+            v-if="msg._direction === 'SENT' && openRequest()"
+            class="flex ion-nowrap"
+        >
+          <ion-chip class="cancelit" expand="block"
+          ><span class="cancel-text"> Cancel Request</span></ion-chip
+          >
+        </div>
+      </div>
+      <!-- Open explorer to view completed transaction if it's not a request or if the request is closed -->
+      <div
+          v-if="
+          !msg.data.request ||
+          getRequestByReplyToId(msg.id.toString())?.data.request === 'accept' ||
+          getRequestByReplyToId(msg.id.toString())?.data.request === 'decline'
+        "
+          class="flex ion-justify-content-center"
+      >
+        <a target="_blank" href="https://insight.dash.org/insight/">
+          <ion-chip class="explorer">
+            <span class="explorer-text">Open explorer</span></ion-chip
+          >
+        </a>
+      </div>
+    </ion-toolbar>
+  </ion-footer>
+</template>
 
 <style scoped>
 a {

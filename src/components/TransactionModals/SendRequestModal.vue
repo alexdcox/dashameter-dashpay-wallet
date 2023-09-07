@@ -1,155 +1,3 @@
-<template>
-  <ion-content class="ion-padding">
-    <div class="flex ion-nowrap ion-padding-bottom">
-      <ion-icon :icon="closeOutline" class="close" @click="cancel"></ion-icon>
-      <div
-        v-if="sendRequestDirection === 'send'"
-        class="title purple flex ion-nowrap"
-      >
-        <ion-icon
-          class="header-icon"
-          :src="require('/public/assets/icons/sendHeader.svg')"
-        />
-        {{ sendRequestDirection }} Dash
-      </div>
-
-      <div
-        v-if="sendRequestDirection === 'request'"
-        class="title green flex ion-nowrap"
-      >
-        <ion-icon
-          class="header-icon"
-          :src="require('/public/assets/icons/requestHeader.svg')"
-        />
-        {{ sendRequestDirection }} Dash
-      </div>
-    </div>
-    <div
-      class="transaction"
-      @click="switchSendRequest"
-      :class="{
-        inflow: sendRequestDirection === 'request',
-        outflow: sendRequestDirection === 'send',
-      }"
-    >
-      <MySelf
-        v-if="sendRequestDirection === 'send'"
-        :sendRequestDirection="sendRequestDirection"
-        :newDashBalance="newDashBalance"
-      ></MySelf>
-      <MyFriend
-        v-if="sendRequestDirection === 'request'"
-        :friendOwnerId="friendOwnerId"
-      ></MyFriend>
-      <div class="line" />
-      <ion-icon
-        v-if="sendRequestDirection === 'send'"
-        @click="switchSendRequest"
-        class="switch"
-        :src="require('/public/assets/icons/switch.svg')"
-      ></ion-icon>
-
-      <ion-icon
-        v-if="sendRequestDirection === 'request'"
-        @click="switchSendRequest"
-        class="switch"
-        :src="require('/public/assets/icons/request.svg')"
-      ></ion-icon>
-      <ion-icon
-        class="arrow"
-        :src="require('/public/assets/icons/arrow_down.svg')"
-      ></ion-icon>
-
-      <MySelf
-        v-if="sendRequestDirection === 'request'"
-        :newDashBalance="newDashBalance"
-        :sendRequestDirection="sendRequestDirection"
-      ></MySelf>
-      <MyFriend
-        v-if="sendRequestDirection === 'send'"
-        :friendOwnerId="friendOwnerId"
-      ></MyFriend>
-    </div>
-
-    <span
-      class="funds"
-      v-if="newDashBalance < 0 && sendRequestDirection === 'send'"
-      >Not enough funds to send this transaction.</span
-    >
-
-    <div class="swap-container">
-      <dash-currency
-        @newFiatSymbol="fiatSymbol = $event"
-        @newFiatRate="fiatRate = $event"
-        v-if="currency === 'dash'"
-        v-model:amount="amount"
-        :amount="amount"
-        :fiatAmount="fiatAmount"
-        :fiatSymbol="fiatSymbol"
-      >
-      </dash-currency>
-      <fiat-currency
-        @newFiatSymbol="fiatSymbol = $event"
-        @newFiatRate="fiatRate = $event"
-        v-if="currency === 'fiat'"
-        v-model:fiatAmount="fiatAmount"
-        :fiatAmount="fiatAmount"
-        :amount="amount"
-        :fiatSymbol="fiatSymbol"
-      ></fiat-currency>
-
-      <ion-icon
-        v-if="sendRequestDirection === 'send'"
-        class="swap"
-        @click="swapCurrency"
-        :src="require('/public/assets/icons/swap_currency.svg')"
-      ></ion-icon>
-      <ion-icon
-        v-if="sendRequestDirection === 'request'"
-        class="swap"
-        @click="swapCurrency"
-        :src="require('/public/assets/icons/switch_receive.svg')"
-      ></ion-icon>
-    </div>
-
-    <div class="message-text">Message</div>
-    <!-- <ion-textarea
-      :autoGrow="true"
-      rows="2"
-      cols="50"
-      class="message-input"
-      v-model="message"
-    ></ion-textarea> -->
-    <ion-input class="message-input" v-model="message"></ion-input>
-  </ion-content>
-  <ion-footer class="ion-no-border">
-    <!-- TODO disable button if the balance is too low -->
-    <ion-chip
-      v-if="sendRequestDirection === 'send'"
-      expand="block"
-      shape="round"
-      class="nextbutton send_color"
-      @click="handleSendRequest"
-      :disabled="newDashBalance < 0 || amount === 0"
-      ><span class="next-text"> {{ sendRequestDirection }}</span></ion-chip
-    >
-    <ion-chip
-      v-if="sendRequestDirection === 'request'"
-      expand="block"
-      shape="round"
-      class="nextbutton request_color"
-      @click="handleSendRequest"
-      :disabled="amount === 0"
-      ><span class="next-text"> {{ sendRequestDirection }}</span></ion-chip
-    >
-    <!-- :class="{
-          send_color: sendRequestDirection === 'send',
-          request_color: sendRequestDirection === 'request',
-        }" -->
-    <!-- TODO: the conditional class applied to ion-chip makes the chip disappear when the send/receive directions are swapped -> try to implement as a computed property instead -->
-  </ion-footer>
-</template>
-
 <script lang="ts">
 import useContacts from "@/composables/contacts";
 import useWallet from "@/composables/wallet";
@@ -178,6 +26,13 @@ import {
   arrowDownOutline,
   closeOutline,
 } from "ionicons/icons";
+import SendHeaderSvg from '../../../public/assets/icons/sendHeader.svg'
+import RequestHeaderSvg from '../../../public/assets/icons/requestHeader.svg'
+import SwitchSvg from '../../../public/assets/icons/switch.svg'
+import SwitchReceiveSvg from '../../../public/assets/icons/switch_receive.svg'
+import SwapCurrencySvg from '../../../public/assets/icons/swap_currency.svg'
+import RequestSvg from '../../../public/assets/icons/request.svg'
+import ArrowDownSvg from '../../../public/assets/icons/arrow_down.svg'
 
 export default defineComponent({
   name: "SendRequestModal",
@@ -194,6 +49,17 @@ export default defineComponent({
     DashCurrency,
     FiatCurrency,
     IonChip,
+  },
+  data() {
+    return {
+      SendHeaderSvg,
+      RequestHeaderSvg,
+      SwitchSvg,
+      SwitchReceiveSvg,
+      SwapCurrencySvg,
+      RequestSvg,
+      ArrowDownSvg,
+    }
   },
   setup(props, { emit }) {
     const store = useStore();
@@ -311,6 +177,158 @@ const fiatValue = ref()
   },
 });
 </script>
+
+<template>
+  <ion-content class="ion-padding">
+    <div class="flex ion-nowrap ion-padding-bottom">
+      <ion-icon :icon="closeOutline" class="close" @click="cancel"></ion-icon>
+      <div
+          v-if="sendRequestDirection === 'send'"
+          class="title purple flex ion-nowrap"
+      >
+        <ion-icon
+            class="header-icon"
+            :src="SendHeaderSvg"
+        />
+        {{ sendRequestDirection }} Dash
+      </div>
+
+      <div
+          v-if="sendRequestDirection === 'request'"
+          class="title green flex ion-nowrap"
+      >
+        <ion-icon
+            class="header-icon"
+            :src="RequestHeaderSvg"
+        />
+        {{ sendRequestDirection }} Dash
+      </div>
+    </div>
+    <div
+        class="transaction"
+        @click="switchSendRequest"
+        :class="{
+        inflow: sendRequestDirection === 'request',
+        outflow: sendRequestDirection === 'send',
+      }"
+    >
+      <MySelf
+          v-if="sendRequestDirection === 'send'"
+          :sendRequestDirection="sendRequestDirection"
+          :newDashBalance="newDashBalance"
+      ></MySelf>
+      <MyFriend
+          v-if="sendRequestDirection === 'request'"
+          :friendOwnerId="friendOwnerId"
+      ></MyFriend>
+      <div class="line" />
+      <ion-icon
+          v-if="sendRequestDirection === 'send'"
+          @click="switchSendRequest"
+          class="switch"
+          :src="SwitchSvg"
+      ></ion-icon>
+
+      <ion-icon
+          v-if="sendRequestDirection === 'request'"
+          @click="switchSendRequest"
+          class="switch"
+          :src="RequestSvg"
+      ></ion-icon>
+      <ion-icon
+          class="arrow"
+          :src="ArrowDownSvg"
+      ></ion-icon>
+
+      <MySelf
+          v-if="sendRequestDirection === 'request'"
+          :newDashBalance="newDashBalance"
+          :sendRequestDirection="sendRequestDirection"
+      ></MySelf>
+      <MyFriend
+          v-if="sendRequestDirection === 'send'"
+          :friendOwnerId="friendOwnerId"
+      ></MyFriend>
+    </div>
+
+    <span
+        class="funds"
+        v-if="newDashBalance < 0 && sendRequestDirection === 'send'"
+    >Not enough funds to send this transaction.</span
+    >
+
+    <div class="swap-container">
+      <dash-currency
+          @newFiatSymbol="fiatSymbol = $event"
+          @newFiatRate="fiatRate = $event"
+          v-if="currency === 'dash'"
+          v-model:amount="amount"
+          :amount="amount"
+          :fiatAmount="fiatAmount"
+          :fiatSymbol="fiatSymbol"
+      >
+      </dash-currency>
+      <fiat-currency
+          @newFiatSymbol="fiatSymbol = $event"
+          @newFiatRate="fiatRate = $event"
+          v-if="currency === 'fiat'"
+          v-model:fiatAmount="fiatAmount"
+          :fiatAmount="fiatAmount"
+          :amount="amount"
+          :fiatSymbol="fiatSymbol"
+      ></fiat-currency>
+
+      <ion-icon
+          v-if="sendRequestDirection === 'send'"
+          class="swap"
+          @click="swapCurrency"
+          :src="SwapCurrencySvg"
+      ></ion-icon>
+      <ion-icon
+          v-if="sendRequestDirection === 'request'"
+          class="swap"
+          @click="swapCurrency"
+          :src="SwitchReceiveSvg"
+      ></ion-icon>
+    </div>
+
+    <div class="message-text">Message</div>
+    <!-- <ion-textarea
+      :autoGrow="true"
+      rows="2"
+      cols="50"
+      class="message-input"
+      v-model="message"
+    ></ion-textarea> -->
+    <ion-input class="message-input" v-model="message"></ion-input>
+  </ion-content>
+  <ion-footer class="ion-no-border">
+    <!-- TODO disable button if the balance is too low -->
+    <ion-chip
+        v-if="sendRequestDirection === 'send'"
+        expand="block"
+        shape="round"
+        class="nextbutton send_color"
+        @click="handleSendRequest"
+        :disabled="newDashBalance < 0 || amount === 0"
+    ><span class="next-text"> {{ sendRequestDirection }}</span></ion-chip
+    >
+    <ion-chip
+        v-if="sendRequestDirection === 'request'"
+        expand="block"
+        shape="round"
+        class="nextbutton request_color"
+        @click="handleSendRequest"
+        :disabled="amount === 0"
+    ><span class="next-text"> {{ sendRequestDirection }}</span></ion-chip
+    >
+    <!-- :class="{
+          send_color: sendRequestDirection === 'send',
+          request_color: sendRequestDirection === 'request',
+        }" -->
+    <!-- TODO: the conditional class applied to ion-chip makes the chip disappear when the send/receive directions are swapped -> try to implement as a computed property instead -->
+  </ion-footer>
+</template>
 
 <style scoped>
 .title {

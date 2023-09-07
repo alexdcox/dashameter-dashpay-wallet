@@ -86,7 +86,7 @@ import {
   IonIcon,
   IonModal,
 } from "@ionic/vue";
-import { Storage } from "@capacitor/storage";
+import { Preferences } from "@capacitor/preferences";
 
 import { arrowBack, qrCodeOutline, cash, build, flag } from "ionicons/icons";
 import { useStore } from "vuex";
@@ -130,7 +130,7 @@ export default {
     const chooseCurrency = async (symbol: string) => {
       fiatSymbol.value = symbol;
       commit("setFiatSymbol", symbol);
-      const writeResult = await Storage.set({
+      const writeResult = await Preferences.set({
         key: `fiatSymbol_${getters.myLabel}`,
         value: getFiatSymbol.value,
       });

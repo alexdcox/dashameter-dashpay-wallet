@@ -1,74 +1,7 @@
-<template>
-  <div class="scroll_container">
-    <div v-if="chatMsgs.length === 0" @click="acceptAndSayHi">
-      <ion-icon
-        class="figure"
-        :src="require('/public/assets/icons/convo.svg')"
-      ></ion-icon>
-      <div class="begin">This is the beginning of a great conversation</div>
-      <div class="write">
-        Write something nice or tap me to send a greeting.
-      </div>
-    </div>
-    <div>
-      <ion-grid style="padding: 0px">
-        <ion-row
-          v-for="msg in chatMsgs"
-          :key="msg.id.toString()"
-          class="row_padding"
-        >
-          <ion-col>
-            <div class="flex ion-justify-content-center">
-              <ion-chip
-                v-if="msg._displayDate"
-                class="timestamp_chip ion-text-center"
-                ><ion-label class="timestamp_label"
-                  >{{ msg._displayDate }}
-                </ion-label></ion-chip
-              >
-            </div>
-
-            <chat-message
-              v-if="msg.data.text && !msg.data.amount"
-              :msg="msg"
-              :friendOwnerId="friendOwnerId"
-            >
-            </chat-message>
-
-            <chat-txn
-              v-if="
-                (msg.data.amount && msg.data.text) ||
-                msg.data.request === 'open'
-              "
-              :msg="msg"
-              :friendOwnerId="friendOwnerId"
-            >
-            </chat-txn>
-
-            <chat-small-txn
-              v-if="!msg.data.request && msg.data.amount && !msg.data.text"
-              :msg="msg"
-              :friendOwnerId="friendOwnerId"
-            >
-            </chat-small-txn>
-            <request-response
-              v-if="
-                msg.data.request === 'decline' || msg.data.request === 'accept'
-              "
-              :msg="msg"
-              :friendOwnerId="friendOwnerId"
-            ></request-response>
-          </ion-col>
-        </ion-row>
-      </ion-grid>
-    </div>
-  </div>
-</template>
-
 <script>
-import { useStore } from "vuex";
+import {useStore} from "vuex";
 
-import { ref } from "vue";
+import {ref} from "vue";
 import {
   IonGrid,
   IonRow,
@@ -77,11 +10,12 @@ import {
   IonChip,
   IonLabel,
 } from "@ionic/vue";
-import { checkmarkDoneOutline } from "ionicons/icons";
+import {checkmarkDoneOutline} from "ionicons/icons";
 import ChatMessage from "@/components/Chat/ChatMessage.vue";
 import ChatTxn from "@/components/Chat/ChatTxn.vue";
 import ChatSmallTxn from "@/components/Chat/ChatSmallTxn.vue";
 import RequestResponse from "../TransactionModals/RequestResponse.vue";
+import ConvoSvg from '../../../public/assets/icons/convo.svg'
 
 export default {
   props: ["chatMsgs", "friendOwnerId"],
@@ -96,6 +30,11 @@ export default {
     RequestResponse,
     IonChip,
     IonLabel,
+  },
+  data() {
+    return {
+      ConvoSvg,
+    }
   },
   setup(props, context) {
     const store = useStore();
@@ -144,6 +83,62 @@ export default {
 };
 </script>
 
+<template>
+  <div class="scroll_container">
+    <div v-if="chatMsgs.length === 0" @click="acceptAndSayHi">
+      <ion-icon class="figure" :src="ConvoSvg"></ion-icon>
+      <div class="begin">This is the beginning of a great conversation</div>
+      <div class="write">
+        Write something nice or tap me to send a greeting.
+      </div>
+    </div>
+    <div>
+      <ion-grid style="padding: 0px">
+        <ion-row
+            v-for="msg in chatMsgs"
+            :key="msg.id.toString()"
+            class="row_padding">
+          <ion-col>
+            <div class="flex ion-justify-content-center">
+              <ion-chip
+                  v-if="msg._displayDate"
+                  class="timestamp_chip ion-text-center">
+                <ion-label class="timestamp_label">{{ msg._displayDate }}
+                </ion-label>
+              </ion-chip>
+            </div>
+            <chat-message
+                v-if="msg.data.text && !msg.data.amount"
+                :msg="msg"
+                :friendOwnerId="friendOwnerId">
+            </chat-message>
+            <chat-txn
+                v-if="
+                (msg.data.amount && msg.data.text) ||
+                msg.data.request === 'open'
+              "
+                :msg="msg"
+                :friendOwnerId="friendOwnerId">
+            </chat-txn>
+            <chat-small-txn
+                v-if="!msg.data.request && msg.data.amount && !msg.data.text"
+                :msg="msg"
+                :friendOwnerId="friendOwnerId"
+            >
+            </chat-small-txn>
+            <request-response
+                v-if="msg.data.request === 'decline' || msg.data.request === 'accept'"
+                :msg="msg"
+                :friendOwnerId="friendOwnerId"
+            ></request-response>
+          </ion-col>
+        </ion-row>
+      </ion-grid>
+    </div>
+  </div>
+</template>
+
+
 <style scoped>
 .scroll_container {
   position: relative;
@@ -152,6 +147,7 @@ export default {
   overflow-y: scroll;
   flex-direction: column-reverse;
 }
+
 /* .row_padding {
   padding-top: 5px;
   padding-bottom: 4px;
@@ -165,6 +161,7 @@ export default {
   transform: translate(-10%, 75%);
   opacity: 0.6;
 }
+
 .begin {
   position: fixed;
   width: 165px;
@@ -178,6 +175,7 @@ export default {
   text-align: center;
   color: #000000;
 }
+
 .write {
   /* margin-top: -5px; */
   position: fixed;

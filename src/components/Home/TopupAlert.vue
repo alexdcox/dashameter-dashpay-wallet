@@ -23,7 +23,8 @@
 import { IonAlert } from "@ionic/vue";
 import { defineComponent, ref } from "vue";
 
-import { getClientIdentity, getClient } from "../../lib/DashClient";
+import DashClient from "@/lib/Dash";
+import {useStore} from "vuex";
 
 export default defineComponent({
   components: { IonAlert },
@@ -31,9 +32,10 @@ export default defineComponent({
     const isOpenRef = ref(false);
     const isOpenSuccess = ref(false);
 
-    const identity = getClientIdentity();
+    const store = useStore()
+    const identity = store.getters.identityId
     console.log("identity from topup :>> ", identity);
-    const credits = identity.balance;
+    const credits = '(some credits)';
     console.log("topup identity :>> ", identity);
 
     const setOpen = (state: boolean) => (isOpenRef.value = state);
@@ -48,13 +50,14 @@ export default defineComponent({
         text: "Top Up",
         id: "confirm-button",
         handler: async () => {
-          await getClient().platform?.identities.topUp(identity.id, 1000);
+          const client = await DashClient.client()
+          await client.platform?.identities.topUp(identity.id, 1000);
           isOpenSuccess.value = true;
         },
       },
     ];
 
-    if (identity.balance <= 100000) setOpen(true);
+    if (identity?.balance <= 100000) setOpen(true);
 
     return { credits, buttons, isOpenRef, setOpen, isOpenSuccess };
   },

@@ -57,7 +57,7 @@ export default defineComponent({
 
     onMounted(async () => {
       setTimeout(async () => {
-        (focus.value as any).$el.setFocus();
+        (focus.value as any)?.$el.setFocus();
       }, 1000);
     });
     

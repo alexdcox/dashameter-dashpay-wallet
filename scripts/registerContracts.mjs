@@ -6,13 +6,13 @@ import Dash from "dash";
 import glob from "glob";
 
 !async function () {
-  const envRun = process.env.VUE_APP_ENV_RUN;
+  const envRun = import.meta.env.VUE_APP_ENV_RUN;
   console.log("Running registeredContracts.js ...");
 
   let clientOpts = {
     network: "testnet",
     wallet: {
-      mnemonic: process.env.VUE_APP_MNEMONIC,
+      mnemonic: import.meta.env.VUE_APP_MNEMONIC,
       unsafeOptions: {
         skipSynchronizationBeforeHeight: 874000,
       }
@@ -150,7 +150,7 @@ import glob from "glob";
           // if (contractName === "JEMBE_CONTRACT") {
           //   try {
           //     fs.appendFileSync(
-          //       `/home/${process.env.USER}/.evoenv`,
+          //       `/home/${import.meta.env.USER}/.evoenv`,
           //       `\nexport VUE_APP_${contractName}_ID_${envRun}=${newId}\n`
           //     );
           //

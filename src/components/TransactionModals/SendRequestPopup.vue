@@ -1,34 +1,3 @@
-<template>
-  <ion-content class="ion-padding-top">
-    <div class="flex ion-justify-content-center headername">Balance</div>
-    <div class="dbalance">{{ myDashBalance }} Dash</div>
-    <div class="fbalance">{{ myFiatBalance }} {{ getFiatSymbol }}</div>
-  </ion-content>
-  <ion-footer
-    class="ion-padding ion-justify-content-center ion-no-border justify"
-  >
-    <ion-chip class="buttons inflow" @click="showRequestDashModal()">
-      <div style="margin-top: 8px">
-        <ion-icon
-          class="popupicon"
-          :src="require('/public/assets/icons/receive.svg')"
-        ></ion-icon>
-        <div class="popupfont">Request</div>
-      </div>
-    </ion-chip>
-    <ion-chip class="buttons outflow" @click="showSendDashModal()">
-      <div style="margin-top: 8px">
-        <ion-icon
-          class="popupicon"
-          :src="require('/public/assets/icons/send.svg')"
-        >
-        </ion-icon>
-        <div class="popupfont">Send</div>
-      </div>
-    </ion-chip>
-  </ion-footer>
-</template>
-
 <script>
 import {
   IonContent,
@@ -39,7 +8,8 @@ import {
 } from "@ionic/vue";
 import useWallet from "@/composables/wallet";
 import useRates from "@/composables/rates";
-
+import SendSvg from '../../../public/assets/icons/send.svg'
+import ReceiveSvg from '../../../public/assets/icons/receive.svg'
 export default {
   emits: ["showSendDashModal", "showRequestDashModal"],
   components: {
@@ -47,6 +17,12 @@ export default {
     IonFooter,
     IonChip,
     IonIcon,
+  },
+  data() {
+    return {
+      SendSvg,
+      ReceiveSvg,
+    }
   },
   setup(_, { emit }) {
     const { myDashBalance, myFiatBalance } = useWallet();
@@ -73,6 +49,30 @@ export default {
   },
 };
 </script>
+
+<template>
+  <ion-content class="ion-padding-top">
+    <div class="flex ion-justify-content-center headername">Balance</div>
+    <div class="dbalance">{{ myDashBalance }} Dash</div>
+    <div class="fbalance">{{ myFiatBalance }} {{ getFiatSymbol }}</div>
+  </ion-content>
+  <ion-footer
+      class="ion-padding ion-justify-content-center ion-no-border justify"
+  >
+    <ion-chip class="buttons inflow" @click="showRequestDashModal()">
+      <div style="margin-top: 8px">
+        <ion-icon class="popupicon" :src="ReceiveSvg"></ion-icon>
+        <div class="popupfont">Request</div>
+      </div>
+    </ion-chip>
+    <ion-chip class="buttons outflow" @click="showSendDashModal()">
+      <div style="margin-top: 8px">
+        <ion-icon class="popupicon" :src="SendSvg"></ion-icon>
+        <div class="popupfont">Send</div>
+      </div>
+    </ion-chip>
+  </ion-footer>
+</template>
 
 <style scoped>
 .dbalance {

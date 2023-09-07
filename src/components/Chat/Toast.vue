@@ -1,17 +1,3 @@
-<template>
-  <ion-toast
-    :css-class="store.state.toast.type"
-    part="message button"
-    position="top"
-    :buttons="showButton()"
-    :is-open="store.state.toast.isOpen"
-    :message="store.state.toast.text"
-    :duration="1500"
-    @didDismiss="closeToast"
-  >
-  </ion-toast>
-</template>
-
 <script lang="ts">
 import { watch, computed } from "vue";
 import { useStore } from "vuex";
@@ -25,8 +11,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
-
-    const toastColor = computed(() => store.state.toast.color || "medium");
+    const toastColor = computed(() => store.state.toast.color || "danger");
 
     watch(
       () => store.state.toast.timestamp,
@@ -35,6 +20,17 @@ export default defineComponent({
         console.log("copy toast state", store.state.toast.isOpen);
       }
     );
+
+    watch(
+        () => store?.state?.toast?.text,
+        () => {
+          const text = store?.state?.toast?.text
+          console.log('CHECK', text)
+          if (text === undefined || text === 'undefined') {
+            debugger
+          }
+        }
+    )
 
     const showButton = function () {
       if (store.state.toast.icon === "copyIcon") {
@@ -72,6 +68,22 @@ export default defineComponent({
 });
 </script>
 
+<template>
+  <ion-toast
+      :css-class="store.state.toast.type"
+      :color="toastColor"
+      part="message button"
+      position="top"
+      :buttons="showButton()"
+      :is-open="store.state.toast.isOpen"
+      :message="store.state.toast.text"
+      :duration="4000 * 100"
+      @didDismiss="closeToast"
+  >
+  </ion-toast>
+  <div>TESTING</div>
+</template>
+
 <style>
 /* ion-toast css-class only works if style is not scoped or if add to core.css */
 /* works if class is named ion-toast or .copiedtoast */
@@ -86,13 +98,6 @@ export default defineComponent({
   margin: auto;
   height: 70px;
 }
-
-ion-toast::part(message) {
-  margin-left: -22px;
-}
-/* ion-toast::part(button) {
-  margin-left: calc(50% - 10px);
-} */
 
 .transactiontoast {
   --background: linear-gradient(

@@ -72,7 +72,7 @@ import ChatHeader from "@/components/Chat/ChatHeader.vue";
 import ChatFooter from "@/components/Chat/ChatFooter.vue";
 import SendRequestModal from "@/components/TransactionModals/SendRequestModal.vue";
 import SendRequestPopup from "@/components/TransactionModals/SendRequestPopup.vue";
-import { getClient } from "@/lib/DashClient";
+import { getClient } from "@/lib/Dash";
 
 // import { Client } from "dash/dist/src/SDK/Client/index";
 

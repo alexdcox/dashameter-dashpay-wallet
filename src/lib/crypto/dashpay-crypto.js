@@ -3,7 +3,7 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable no-bitwise */
 const CryptoJS = require("crypto-js");
-const dashcore = require("@dashevo/dashcore-lib");
+import * as Dashcore from '@dashevo/dashcore-lib'
 const secp256k1 = require("secp256k1/elliptic");
 
 const ecdhSharedKey = (senderPrivateKey, receiverPublicKey) => {

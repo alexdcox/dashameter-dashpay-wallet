@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const dashcore = require("@dashevo/dashcore-lib");
+import * as Dashcore from '@dashevo/dashcore-lib'
 const dashpaycrypto = require("./dashpay-crypto");
 
 const sendDashToContactRequest = async (client, contactRequest, satoshis) => {

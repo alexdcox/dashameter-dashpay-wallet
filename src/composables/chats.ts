@@ -1,13 +1,25 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-import { ref, computed } from "vue";
-import { strict as assert } from "assert";
-import { getClient, getClientIdentity } from "../lib/DashClient";
-import { useStore } from "vuex";
+import {computed} from "vue";
+import Dash from "@/lib/Dash";
+import {useStore} from "vuex";
 import useRates from "@/composables/rates";
-const { createContactRequest } = require("../lib/crypto/dashpay-crypto");
-const {
-  sendDashToContactRequest,
-} = require("../lib/crypto/dashpay-send-to-contactrequest");
+
+// import { createContactRequest } from "@dashevo/dashcore-lib"
+// const {
+//   sendDashToContactRequest,
+// } = require("../lib/crypto/dashpay-send-to-contactrequest");
+
+const createContactRequest = async (a: any, b: any, c: any) => {
+  console.error("THIS NEEDS TO BE UPDATED TO WORK WITH THE NEW DASHCORE LIBS")
+  return Promise.resolve({
+    toJSON: () => {
+    },
+  })
+}
+
+const sendDashToContactRequest = async (a: any, b: any, c: any) => {
+  console.error("THIS NEEDS TO BE UPDATED TO WORK WITH THE NEW DASHCORE LIBS")
+  return Promise.resolve('bad txid')
+}
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -17,45 +29,27 @@ let isRefreshLoopActive = false;
 
 export default function useChats() {
   const store = useStore();
+  const {dashInDuffs, getFiatSymbol, duffsInFiatNumber} = useRates();
 
-  const { dashInDuffs, getFiatSymbol, duffsInFiatNumber } = useRates();
-
-  console.log("store :>> ", store);
-
-  const sentContactRequest = computed(
-    () => store.getters.getSentContactRequest
-  );
-
-  const receivedContactRequest = computed(
-    () => store.getters.getReceivedContactRequest
-  );
-
+  const sentContactRequest = computed(() => store.getters.getSentContactRequest);
+  const receivedContactRequest = computed(() => store.getters.getReceivedContactRequest);
   const getChatMsgs = computed(() => store.getters.getChatMsgs);
-
   const getChatMsgById = computed(() => store.getters.getChatMsgById);
-
-  const getRequestByReplyToId = computed(
-    () => store.getters.getRequestByReplyToId
-  );
+  const getRequestByReplyToId = computed(() => store.getters.getRequestByReplyToId);
 
   async function syncChatsLoop() {
     if (!isRefreshLoopActive) return;
     console.log("syncChatsLoop");
     store.dispatch("syncChats");
-    await sleep(5000);
-    syncChatsLoop();
+    // await sleep(5000);
+    // syncChatsLoop();
   }
 
   function startSyncChats() {
-    assert(
-      !isRefreshLoopActive,
-      "Error: syncChats refresh loop already running!"
-    );
-
+    if (isRefreshLoopActive) return
     console.log("startSyncChats");
     isRefreshLoopActive = true;
-
-    syncChatsLoop();
+    // syncChatsLoop();
   }
 
   function stopSyncChats() {
@@ -73,21 +67,16 @@ export default function useChats() {
     request = "", // TODO type as enum
     replyToChatId = ""
   ) => {
-    console.log("sendChat", { chatText, friendOwnerId, amount, request });
+    console.log("sendChat", {chatText, friendOwnerId, amount, request});
 
-    const client = getClient();
-    // console.log("logged in with mnemonic :>> ", client?.wallet?.exportWallet());
-
+    const client = await Dash.client()
+    const identity = await Dash.identity()
     const duffs = dashInDuffs.value(amount);
-
     // don't send L1 transaction on request 'open' | 'decline'
     let txId = "";
-    if (duffs > 0 && ["", "accept"].includes(request))
-      txId = await sendDashToContactRequest(
-        getClient(),
-        store.getters.getReceivedContactRequest(friendOwnerId),
-        duffs
-      );
+    if (duffs > 0 && ["", "accept"].includes(request)) {
+      txId = await sendDashToContactRequest(client, store.getters.getReceivedContactRequest(friendOwnerId), duffs);
+    }
 
     const docProperties = {
       text: chatText,
@@ -101,35 +90,20 @@ export default function useChats() {
     };
 
     console.log("sendChat docProperties :>> ", docProperties);
-
-    const document = await client.platform?.documents.create(
-      "dashpayWallet.chat",
-      getClientIdentity(),
-      docProperties
-    );
-
+    const document = await client.platform?.documents.create("dashpayWallet.chat", identity, docProperties);
     console.log("sendChat document :>> ", document);
-
-    store.commit("setChatMsgs", [{ ...document, _state: "sending" }]);
-
-    const documentBatchMsgOnly = {
-      create: [document],
-      replace: [],
-      delete: [],
-    };
-
+    store.commit("setChatMsgs", [{...document, _state: "sending"}]);
+    const documentBatchMsgOnly = {create: [document], replace: [], delete: []};
     let documentBatchToSend;
 
     // Attach contact request if we haven't sent one before
     if (!contactRequestExistsFor(friendOwnerId)) {
-      const contactRequest = await createContactRequest(
-        client,
-        getClientIdentity(),
-        friendOwnerId
-      );
+      const contactRequest = await createContactRequest(client, identity, friendOwnerId);
 
-      if (contactRequest.toJSON().$ownerId == contactRequest.toJSON.toUserId)
-        debugger;
+      // TODO: adc: REWORK THIS
+      // if (contactRequest.toJSON().$ownerId == contactRequest.toJSON.toUserId)
+      //   debugger;
+      debugger
 
       documentBatchToSend = {
         create: [document, contactRequest],
@@ -138,71 +112,43 @@ export default function useChats() {
       };
     } else documentBatchToSend = documentBatchMsgOnly;
 
-    console.log("sendChat broadcasting", {
-      documentBatchToSend,
-      clientIdenity: getClientIdentity(),
-    });
+    console.log("sendChat broadcasting", {documentBatchToSend, clientIdenity: identity});
 
     // Broadcast document with potentially attached contactRequest
     // Catch duplicate contactRequest error and only broadcast chatMsg
     let result;
     try {
-      result = await client.platform?.documents.broadcast(
-        documentBatchToSend,
-        getClientIdentity()
-      );
-
+      result = await client.platform?.documents.broadcast(documentBatchToSend, identity);
       console.log("sendChat documentBatchToSend result :>> ", result);
 
-      // On successful ST immediately set the contactRequest in state to speed up UX
       if (result.transitions[1]?.type === "contactRequest") {
-        const newContactRequestSent = {
-          ...result.transitions[1],
-          ownerId: result.ownerId,
-        };
-        console.log(
-          "newContactRequestSent :>> ",
-          newContactRequestSent.toJSON()
-        );
+        const newContactRequestSent = {...result.transitions[1], ownerId: result.ownerId,};
+        console.log("newContactRequestSent :>> ", newContactRequestSent.toJSON());
         store.commit("setContactRequestSent", newContactRequestSent);
       }
 
-      // Commit broadcast msg State Transistion directly to state to speed up UX
       const chatSent = result.transitions[0];
-
       chatSent.ownerId = result.ownerId;
-
       chatSent._state = "sent";
-
       store.commit("setChatMsgs", [chatSent]);
     } catch (e) {
-      // Catch duplicate contactRequesterror and only broadcast chatMsg
-      if (e.data.errors[0].name === "DuplicateDocumentError") {
+      const b: any = e
+      if (b.data?.errors[0]?.name === "DuplicateDocumentError") {
         try {
-          result = await client.platform?.documents.broadcast(
-            documentBatchMsgOnly,
-            getClientIdentity()
-          );
-          // Commit broadcast msg State Transistion directly to state to speed up UX
+          result = await client.platform?.documents.broadcast(documentBatchMsgOnly, identity);
           const chatSent = result.transitions[0];
-
           chatSent.ownerId = result.ownerId;
-
           chatSent._state = "sent";
-
           store.commit("setChatMsgs", [chatSent]);
-
           console.log("sendChat documentBatchMsgOnly result :>> ", result);
         } catch (e) {
-          store.commit("setChatMsgs", [{ ...document, _state: "error" }]);
+          store.commit("setChatMsgs", [{...document, _state: "error"}]);
           throw e;
         }
       } else {
         throw e;
       }
     }
-
-    // debugger;
   };
 
   return {

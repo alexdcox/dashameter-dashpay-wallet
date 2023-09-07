@@ -1,18 +1,83 @@
+<script lang="ts">
+import {
+  IonPage,
+  IonContent,
+  IonIcon,
+  IonChip,
+  IonFooter,
+  IonToolbar,
+  IonicSlides,
+} from "@ionic/vue";
+
+import DashdPurpleSvg from '../../public/assets/icons/dashd-purple.svg'
+import FindfriendsSvg from '../../public/assets/icons/findfriends.svg'
+import SharevalueSvg from '../../public/assets/icons/sharevalue.svg'
+import {defineComponent, onMounted} from "vue";
+import 'swiper/css';
+import '@ionic/vue/css/ionic-swiper.css';
+import {useRouter} from "vue-router";
+import {Swiper, SwiperSlide} from 'swiper/vue';
+import AccountStorage from "@/lib/helpers/AccountStorage";
+
+export default defineComponent({
+  components: {
+    IonFooter,
+    IonToolbar,
+    IonPage,
+    IonContent,
+    IonIcon,
+    IonChip,
+    Swiper,
+    SwiperSlide,
+  },
+  data() {
+    return {
+      DashdPurpleSvg,
+      FindfriendsSvg,
+      SharevalueSvg,
+    }
+  },
+  setup() {
+    const router = useRouter();
+    const slideOpts = { initialSlide: 1, speed: 400, };
+    onMounted(async () => {
+      const accounts = await AccountStorage.list()
+      if (accounts.length) router.replace("/chooseaccount");
+    });
+    return {slideOpts, modules: [IonicSlides],};
+  },
+});
+</script>
+
 <template>
   <ion-page>
     <ion-content class="ion-padding" scroll-y="false">
-      <ion-slides pager="true">
-        <ion-slide>
+
+      <!--      <swiper>-->
+      <!--        <swiper-slide>-->
+      <!--          Testing-->
+      <!--          <div class="div" style="background: white; width: 200px; height: 600px;">-->
+      <!--            YESLAWD-->
+      <!--          </div>-->
+      <!--        </swiper-slide>-->
+      <!--        <swiper-slide>-->
+      <!--          Testing2-->
+      <!--          <div class="div" style="background: white; width: 200px; height: 600px;">-->
+      <!--            YESLAWD2-->
+      <!--          </div>-->
+      <!--        </swiper-slide>-->
+      <!--      </swiper>-->
+
+      <swiper>
+        <swiper-slide>
           <div class="slide">
             <ion-icon
-              :src="require('/public/assets/icons/dashd-purple.svg')"
-              class="welcome"
-            ></ion-icon>
+                :src="DashdPurpleSvg"
+                class="welcome"/>
             <div>
               <ion-icon
-                :src="require('/public/assets/icons/findfriends.svg')"
-                class="friends"
-              ></ion-icon>
+                  :src="FindfriendsSvg"
+                  class="friends"/>
             </div>
             <h2 class="find flex ion-justify-content-center">Find Friends</h2>
             <p class="instant flex ion-justify-content-center">
@@ -20,17 +85,17 @@
               anywhere.
             </p>
           </div>
-        </ion-slide>
+        </swiper-slide>
 
-        <ion-slide>
+        <swiper-slide>
           <ion-icon
-            :src="require('/public/assets/icons/dashd-purple.svg')"
-            class="welcome"
+              :src="DashdPurpleSvg"
+              class="welcome"
           ></ion-icon>
           <div>
             <ion-icon
-              :src="require('/public/assets/icons/sharevalue.svg')"
-              class="friends"
+                :src="SharevalueSvg"
+                class="friends"
             ></ion-icon>
           </div>
           <h2 class="find flex ion-justify-content-center">Share Value</h2>
@@ -40,17 +105,17 @@
           <!-- <img src="/dash-d.png" />
           <h2>Pay with ease</h2>
           <p>Pay and get paid instantly with easy to use payment flows.</p> -->
-        </ion-slide>
+        </swiper-slide>
 
-        <ion-slide>
+        <swiper-slide>
           <ion-icon
-            :src="require('/public/assets/icons/dashd-purple.svg')"
-            class="welcome"
+              :src="DashdPurpleSvg"
+              class="welcome"
           ></ion-icon>
           <div>
             <ion-icon
-              :src="require('/public/assets/icons/sharevalue.svg')"
-              class="friends"
+                :src="SharevalueSvg"
+                class="friends"
             ></ion-icon>
           </div>
           <h2 class="find flex ion-justify-content-center">Discover</h2>
@@ -59,77 +124,34 @@
             <!-- Have complete control and customize your wallet based on your needs. -->
           </p>
           <ion-footer
-            class="ion-no-border ion-justify-content-center"
-            style="margin-top: 30px"
+              class="ion-no-border ion-justify-content-center"
+              style="margin-top: 30px"
           >
             <ion-toolbar class="ion-justify-content-center">
               <ion-chip
-                expand="block"
-                class="capitalize text register"
-                router-link="/choosename"
-                >Register</ion-chip
+                  expand="block"
+                  class="capitalize text register"
+                  router-link="/choosename"
+              >Register
+              </ion-chip
               >
 
               <!-- <br /><br /> -->
               <ion-chip
-                expand="block"
-                class="capitalize text login"
-                router-link="/recoverwallet"
-                >Login</ion-chip
+                  expand="block"
+                  class="capitalize text login"
+                  router-link="/recoverwallet"
+              >Login
+              </ion-chip
               >
             </ion-toolbar>
           </ion-footer>
-        </ion-slide>
-      </ion-slides>
+        </swiper-slide>
+      </swiper>
+
     </ion-content>
   </ion-page>
 </template>
-
-<script lang="ts">
-import {
-  IonSlides,
-  IonSlide,
-  IonPage,
-  IonContent,
-  IonIcon,
-  IonChip,
-  IonFooter,
-  IonToolbar,
-} from "@ionic/vue";
-
-import { defineComponent, onMounted } from "vue";
-
-import { useRouter } from "vue-router";
-
-import { getAccounts } from "@/lib/helpers/AccountStorage";
-
-export default defineComponent({
-  components: {
-    IonFooter,
-    IonToolbar,
-    IonSlides,
-    IonSlide,
-    IonPage,
-    IonContent,
-    IonIcon,
-    IonChip,
-  },
-  setup() {
-    const router = useRouter();
-
-    const slideOpts = {
-      initialSlide: 1,
-      speed: 400,
-    };
-
-    onMounted(async () => {
-      if (await getAccounts()) router.replace("/chooseaccount");
-    });
-
-    return { slideOpts };
-  },
-});
-</script>
 
 <style scoped>
 .welcome {
@@ -137,6 +159,7 @@ export default defineComponent({
   height: 20px;
   margin-top: 20px;
 }
+
 .find {
   font-style: normal;
   font-weight: bold;
@@ -147,11 +170,13 @@ export default defineComponent({
   letter-spacing: -0.005em;
   margin-top: 20px;
 }
+
 .friends {
   width: 334px;
   height: 184px;
   margin-top: 75px;
 }
+
 .instant {
   font-style: normal;
   font-weight: normal;
@@ -161,9 +186,11 @@ export default defineComponent({
   letter-spacing: -0.004em;
   color: #68717b;
 }
-ion-slides {
+
+.swiper {
   height: 100%;
 }
+
 .text {
   font-style: normal;
   font-weight: 600;
@@ -185,10 +212,12 @@ ion-slides {
 
   border-radius: 10px;
 }
+
 .register {
   background: linear-gradient(40.37deg, #6a67fb 0.15%, #8d71ff 100%);
   color: #ffffff;
 }
+
 .login {
   background: #f2f4ff;
   color: #6c69fc;
@@ -223,7 +252,8 @@ p {
 p b {
   color: var(--ion-text-color, #000000);
 }
-ion-slides {
+
+.swiper {
   --bullet-background-active: #6c69fc;
 }
 </style>

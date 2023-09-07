@@ -11,6 +11,7 @@ import { defineComponent, onErrorCaptured } from "vue";
 import Toast from "@/components/Chat/Toast.vue";
 
 import { useStore } from "vuex";
+import {useRouter} from "vue-router";
 
 export default defineComponent({
   name: "App",
@@ -21,16 +22,21 @@ export default defineComponent({
   },
   setup() {
     // const client = getClient();
-
     // const clientIdentity = getClientIdentity();
 
-    // const router = useRouter();
-
+    const router = useRouter();
     const store = useStore();
+
+    // if (!store.state.accountDPNS) {
+    //   router.replace("/chooseaccount");
+    //   return
+    // }
+    // console.log('ACCOUNT DPNS', store.state.accountDPNS)
+
 
     onErrorCaptured((error: any) => {
       console.error("onErrorCaptured", error);
-      store.dispatch("showToast", { text: error, color: "danger" });
+      store.dispatch("showToast", { text: String(error), color: "danger" });
       return false;
     });
 

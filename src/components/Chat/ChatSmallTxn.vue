@@ -1,74 +1,3 @@
-<template>
-  <div
-    class="chatbubble_txn_small"
-    style="position: relative"
-    :class="{
-      user: msg._direction?.toUpperCase() === 'SENT',
-      chat_partner_txn: msg._direction?.toUpperCase() === 'RECEIVED',
-      user_txn: msg._direction?.toUpperCase() === 'SENT',
-    }"
-    @mouseover="hover = true"
-    @mouseleave="hover = false"
-    @click="showViewRequestModal(true)"
-  >
-    <div class="flex ion-nowrap">
-      <ion-icon
-        v-if="msg._direction?.toUpperCase() === 'SENT'"
-        class="dash_icon_small"
-        :src="require('/public/assets/icons/userSent.svg')"
-      ></ion-icon>
-      <ion-icon
-        v-else-if="msg._direction?.toUpperCase() === 'RECEIVED'"
-        class="dash_icon_small"
-        :src="require('/public/assets/icons/partnerSent.svg')"
-      ></ion-icon>
-
-      <div class="leftpadding">
-        <div class="amount">{{ duffsInDash(msg.data.amount) }} Dash</div>
-        <div class="usdamount">
-          ~{{ msg.data.fiatAmount?.toFixed(2) }} {{ msg.data.fiatSymbol }}
-        </div>
-      </div>
-    </div>
-    <div class="alignrow">
-      <div class="chat_timestamp">{{ hours }}:{{ mins }}</div>
-      <!-- prop passed from LegacyPaymentContent, show checkmark if transaction is instant locked -->
-      <ion-icon
-        v-if="
-          (msg._direction === 'SENT' && msg._state != 'sending') ||
-          msg._state != 'false'
-        "
-        class="align_checkmark checkmark_color"
-        :icon="checkmarkDoneOutline"
-      >
-      </ion-icon>
-      <ReplyPopover
-        style="margin-bottom: 25px"
-        v-if="!isReply"
-        :hover="hover"
-        :msg="msg"
-        :friendOwnerId="friendOwnerId"
-      ></ReplyPopover>
-      <ion-spinner
-        v-if="msg._state === 'sending'"
-        name="lines-small"
-        color="medium"
-      ></ion-spinner>
-    </div>
-
-    <ion-modal
-      :is-open="isViewRequestModalOpen"
-      @didDismiss="showViewRequestModal(false)"
-    >
-      <ViewRequestModal
-        v-if="!isReply"
-        :friendOwnerId="friendOwnerId"
-        :msg="msg"
-      ></ViewRequestModal>
-    </ion-modal>
-  </div>
-</template>
-
 <script lang="ts">
 import { IonIcon, IonModal, IonSpinner } from "@ionic/vue";
 import { checkmarkDoneOutline } from "ionicons/icons";
@@ -76,8 +5,9 @@ import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import useRates from "@/composables/rates";
 import ReplyPopover from "@/components/Chat/ReplyPopover.vue";
-
 import ViewRequestModal from "@/components/TransactionModals/ViewRequestModal.vue";
+import UserSentSvg from '../../../public/assets/icons/userSent.svg'
+import PartnerSentSvg from '../../../public/assets/icons/partnerSent.svg'
 
 export default {
   props: ["msg", "friendOwnerId", "isReply"],
@@ -87,6 +17,12 @@ export default {
     ReplyPopover,
     ViewRequestModal,
     IonSpinner,
+  },
+  data() {
+    return {
+      UserSentSvg,
+      PartnerSentSvg,
+    }
   },
   setup(props: any) {
     const { duffsInDash, duffsInFiatString, getFiatSymbol } = useRates();
@@ -120,6 +56,77 @@ export default {
   },
 };
 </script>
+
+<template>
+  <div
+      class="chatbubble_txn_small"
+      style="position: relative"
+      :class="{
+      user: msg._direction?.toUpperCase() === 'SENT',
+      chat_partner_txn: msg._direction?.toUpperCase() === 'RECEIVED',
+      user_txn: msg._direction?.toUpperCase() === 'SENT',
+    }"
+      @mouseover="hover = true"
+      @mouseleave="hover = false"
+      @click="showViewRequestModal(true)"
+  >
+    <div class="flex ion-nowrap">
+      <ion-icon
+          v-if="msg._direction?.toUpperCase() === 'SENT'"
+          class="dash_icon_small"
+          :src="UserSentSvg"
+      ></ion-icon>
+      <ion-icon
+          v-else-if="msg._direction?.toUpperCase() === 'RECEIVED'"
+          class="dash_icon_small"
+          :src="PartnerSentSvg"
+      ></ion-icon>
+
+      <div class="leftpadding">
+        <div class="amount">{{ duffsInDash(msg.data.amount) }} Dash</div>
+        <div class="usdamount">
+          ~{{ msg.data.fiatAmount?.toFixed(2) }} {{ msg.data.fiatSymbol }}
+        </div>
+      </div>
+    </div>
+    <div class="alignrow">
+      <div class="chat_timestamp">{{ hours }}:{{ mins }}</div>
+      <!-- prop passed from LegacyPaymentContent, show checkmark if transaction is instant locked -->
+      <ion-icon
+          v-if="
+          (msg._direction === 'SENT' && msg._state != 'sending') ||
+          msg._state != 'false'
+        "
+          class="align_checkmark checkmark_color"
+          :icon="checkmarkDoneOutline"
+      >
+      </ion-icon>
+      <ReplyPopover
+          style="margin-bottom: 25px"
+          v-if="!isReply"
+          :hover="hover"
+          :msg="msg"
+          :friendOwnerId="friendOwnerId"
+      ></ReplyPopover>
+      <ion-spinner
+          v-if="msg._state === 'sending'"
+          name="lines-small"
+          color="medium"
+      ></ion-spinner>
+    </div>
+
+    <ion-modal
+        :is-open="isViewRequestModalOpen"
+        @didDismiss="showViewRequestModal(false)"
+    >
+      <ViewRequestModal
+          v-if="!isReply"
+          :friendOwnerId="friendOwnerId"
+          :msg="msg"
+      ></ViewRequestModal>
+    </ion-modal>
+  </div>
+</template>
 
 <style scoped>
 .chatbubble_txn_small {

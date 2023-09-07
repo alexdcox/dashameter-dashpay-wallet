@@ -1,216 +1,30 @@
-<template>
-  <ion-page>
-    <ion-header>
-      <ion-toolbar class="app-header">
-        <ion-buttons slot="start">
-          <ion-back-button class="arrow"></ion-back-button>
-        </ion-buttons>
-        <HomeHeader></HomeHeader>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content :fullscreen="true" class="ion-padding-bottom">
-      <ion-toolbar>
-        <ion-searchbar
-          animated
-          placeholder="Find your friends"
-          debounce="500"
-          enterkeyhint="search"
-          v-model="searchText"
-          @ionChange="searchContacts"
-        ></ion-searchbar>
-      </ion-toolbar>
-      <ion-list class="ion-no-padding">
-        <div v-if="searchText === ''">
-          <ion-list-header class="ion-no-padding">Note to Self</ion-list-header>
-
-          <ion-item button class="ion-no-padding">
-            <ion-avatar
-              slot="start"
-              @click="router.push(`/profile/${store.getters.myOwnerId}`)"
-            >
-              <img :src="getUserAvatar(store.getters.myOwnerId)" />
-            </ion-avatar>
-            <ion-label
-              @click="router.push(`/conversation/${store.getters.myOwnerId}`)"
-            >
-              <h2>{{ getUserLabel(store.getters.myOwnerId) }}</h2>
-              <h3>
-                {{ getUserDisplayName(store.getters.myOwnerId) }}
-              </h3>
-              <p>Write a note to myself</p>
-            </ion-label>
-          </ion-item>
-        </div>
-        <div v-if="searchText === ''">
-          <ion-list-header class="ion-no-padding"> My Friends </ion-list-header>
-
-          <ion-item
-            v-for="contact in getMyFriends"
-            :key="contact.id.toString()"
-            button
-            class="ion-no-padding"
-          >
-            <ion-avatar
-              slot="start"
-              @click="
-                router.push(`/profile/${contact.data.toUserId.toString()}`)
-              "
-            >
-              <img :src="getUserAvatar(contact.data.toUserId.toString())" />
-            </ion-avatar>
-            <ion-label
-              @click="
-                router.push(`/conversation/${contact.data.toUserId.toString()}`)
-              "
-            >
-              <h2>{{ getUserLabel(contact.data.toUserId.toString()) }}</h2>
-              <h3>
-                {{ getUserDisplayName(contact.data.toUserId.toString()) }}
-              </h3>
-              <p>
-                {{ getUserPublicMessage(contact.data.toUserId.toString()) }}
-              </p>
-            </ion-label>
-          </ion-item>
-        </div>
-        <div v-if="searchText === ''">
-          <ion-list-header class="ion-no-padding">
-            Suggested Friends
-          </ion-list-header>
-          <ion-item
-            class="ion-no-padding"
-            v-for="contact in getSuggestedFriends"
-            :key="contact.id"
-            button
-          >
-            <ion-avatar
-              slot="start"
-              @click="
-                router.push(`/profile/${contact.data.toUserId.toString()}`)
-              "
-            >
-              <img :src="getUserAvatar(contact.data.toUserId.toString())" />
-            </ion-avatar>
-            <ion-label
-              @click="
-                router.push(`/conversation/${contact.data.toUserId.toString()}`)
-              "
-            >
-              <h2
-                class="
-                  flex
-                  ion-align-items-center ion-justify-content-between ion-nowrap
-                "
-              >
-                {{ getUserLabel(contact.data.toUserId.toString()) }}
-                <div class="flex ion-nowrap ion-align-items-center">
-                  <span class="social-count">
-                    {{ contact._socialMetrics.count }}
-                    <ion-icon
-                      :icon="people"
-                      color="tertiary"
-                      class="social-icon"
-                    ></ion-icon>
-                  </span>
-                </div>
-              </h2>
-              <h3>
-                {{ getUserDisplayName(contact.data.toUserId.toString()) }}
-              </h3>
-              <p>
-                {{ getUserPublicMessage(contact.data.toUserId.toString()) }}
-              </p>
-            </ion-label>
-          </ion-item>
-        </div>
-        <ion-list-header class="ion-no-padding"> Everyone </ion-list-header>
-
-        <ion-item
-          v-for="contact in contacts"
-          :key="contact.$id"
-          button
-          class="ion-no-padding"
-        >
-          <ion-avatar
-            slot="start"
-            @click="router.push(`/profile/${contact.$ownerId}`)"
-          >
-            <img :src="getUserAvatar(contact.$ownerId)" />
-          </ion-avatar>
-          <ion-label @click="router.push(`/conversation/${contact.$ownerId}`)">
-            <h2>{{ getUserLabel(contact.$ownerId) }}</h2>
-            <h3>
-              {{ getUserDisplayName(contact.$ownerId) }}
-            </h3>
-            <p>
-              {{ getUserPublicMessage(contact.$ownerId) }}
-            </p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
-
-      <ion-infinite-scroll
-        @ionInfinite="loadScrollData($event)"
-        threshold="100px"
-        id="infinite-scroll"
-        :disabled="disableInfiniteScroll"
-      >
-        <ion-infinite-scroll-content
-          loading-spinner="bubbles"
-          loading-text="Finding more Friends..."
-        >
-        </ion-infinite-scroll-content>
-      </ion-infinite-scroll>
-    </ion-content>
-  </ion-page>
-</template>
-
 <script lang="ts">
-import { onMounted, ref, reactive, computed } from "vue";
-import { people } from "ionicons/icons";
+import {computed, onMounted, ref} from "vue";
+import {people} from "ionicons/icons";
 import {
-  IonIcon,
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButton,
-  IonLabel,
-  IonInput,
-  IonItem,
-  IonFooter,
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonLoading,
-  IonSearchbar,
   IonAvatar,
-  IonList,
-  IonListHeader,
+  IonBackButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
   IonInfiniteScroll,
   IonInfiniteScrollContent,
-  IonButtons,
-  IonBackButton,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonPage,
+  IonSearchbar,
+  IonToolbar,
 } from "@ionic/vue";
 
-import {
-  getClientOpts,
-  initClient,
-  getClient,
-  getClientIdentity,
-} from "@/lib/DashClient";
-import { Client } from "dash/dist/src/SDK/Client/index";
-
-import { useRouter } from "vue-router";
-import { useStore } from "vuex";
-
-import { updateAccount, createAccountId } from "@/lib/helpers/AccountStorage";
+import DashClient from "@/lib/Dash";
+import {useRouter} from "vue-router";
+import {useStore} from "vuex";
 import useContacts from "@/composables/contacts";
-
 import HomeHeader from "@/components/HomeHeader.vue";
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import Dash from "@/lib/Dash";
 
 const SCROLL_SIZE = 25;
 
@@ -235,22 +49,13 @@ export default {
     HomeHeader,
   },
   setup() {
-    const client = getClient();
-
     const router = useRouter();
-
     const store = useStore();
-
     const errorMessage = ref("");
-
     const searchText = ref("");
-
     const contacts = ref<any>([]);
-
     const mostRecentData = ref(0);
-
     const scrollPage = ref(0);
-
     const disableInfiniteScroll = ref(false);
 
     const {
@@ -264,83 +69,57 @@ export default {
     } = useContacts();
 
     const filteredFriendIds = computed(() => {
-      const myFriendIds = getMyFriends.value.map((x: any) =>
-        x.data.toUserId.toString()
-      );
-      const suggestedFriendIds = getSuggestedFriends.value.map((x: any) =>
-        x.data.toUserId.toString()
-      );
+      const myFriendIds = getMyFriends.value.map((x: any) => x.data.toUserId.toString())
+      const suggestedFriendIds = getSuggestedFriends.value.map((x: any) => x.data.toUserId.toString())
       return [myOwnerId.value, ...myFriendIds, ...suggestedFriendIds]; // TODO add blocked ownerIds
     });
 
     const loadScrollData = async (event: any) => {
-      const queryOpts = {
+      console.log('LOAD SCROLL DATA')
+      const client = await DashClient.client()
+      const result = await client.platform!.documents.get("dpns.domain", {
         where: [["normalizedParentDomainName", "==", "dash"]],
         orderBy: [["normalizedLabel", "asc"]],
         startAt: 1 + scrollPage.value * SCROLL_SIZE,
         limit: SCROLL_SIZE,
-      };
-
-      const thisData = Date.now();
-
-      mostRecentData.value = thisData;
-
-      const result = await client!.platform!.documents.get(
-        "dpns.domain",
-        queryOpts
-      );
-
+      })
       if (result.length > 0) scrollPage.value++; // We found new results so increase the page index for the next query
 
-      result.forEach((dpnsDoc: any) => {
-        store.commit("setDPNS", dpnsDoc);
-      });
-
-      // Newer data was loaded, so don't display stale results
-      if (thisData != mostRecentData.value) return;
+      result.forEach((dpnsDoc: any) => store.commit("setDPNS", dpnsDoc))
 
       const resultJson = result
         .map((x: any) => x.toJSON())
-        .filter((x: any) => !filteredFriendIds.value.includes(x.$ownerId));
+        .filter((x: any) => !filteredFriendIds.value.includes(x.$ownerId))
 
-      resultJson.forEach((el: any) => {
-        contacts.value.push(el);
-      });
+      console.log("-->", resultJson)
 
-      event?.target?.complete();
+      resultJson.forEach((el: any) => contacts.value.push(el))
+      event?.target?.complete()
 
       await store.dispatch("fetchDashpayProfiles", {
         ownerIds: contacts.value.map((x: any) => x.$ownerId),
-      });
+      })
     };
 
     const searchContacts = async (event: any) => {
       console.log("event :>> ", event.detail.value);
       console.log("scrollPage.value :>> ", scrollPage.value);
-
       const searchVal = event.detail.value;
-
       if (searchVal === "") {
         scrollPage.value = 0;
         contacts.value = [];
         disableInfiniteScroll.value = false;
-
         loadScrollData("");
         return;
       }
 
       const thisData = Date.now();
-
       mostRecentData.value = thisData;
-
       disableInfiniteScroll.value = true;
-
       console.log("disableInfiniteScroll :>> ", disableInfiniteScroll);
 
-      const searchResults = await client!.platform!.names.search(
-        searchVal,
-        "dash"
-      );
+      const client = await Dash.client()
+      const searchResults = await client.platform!.names.search(searchVal, "dash");
 
       console.log("searchResult :>> ", searchResults);
 
@@ -351,11 +130,8 @@ export default {
 
       // A newer search was started, so don't display stale results
       if (thisData != mostRecentData.value) return;
-
       contacts.value = searchResults.map((x: any) => x.toJSON());
-
       console.log("contacts.value :>> ", contacts.value);
-
       await store.dispatch("fetchDashpayProfiles", {
         ownerIds: contacts.value.map((x: any) => x.$ownerId),
       });
@@ -363,7 +139,6 @@ export default {
 
     onMounted(async () => {
       // client = await initClient(clientOpts);
-      await sleep(150); // Don't block the viewport
       loadScrollData("");
     });
 
@@ -387,6 +162,172 @@ export default {
   },
 };
 </script>
+<template>
+  <ion-page>
+    <ion-header>
+      <ion-toolbar class="app-header">
+        <ion-buttons slot="start">
+          <ion-back-button class="arrow"></ion-back-button>
+        </ion-buttons>
+        <HomeHeader></HomeHeader>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content :fullscreen="true" class="ion-padding-bottom">
+      <ion-toolbar>
+        <ion-searchbar
+            animated
+            placeholder="Find your friends"
+            debounce="500"
+            enterkeyhint="search"
+            v-model="searchText"
+            @ionChange="searchContacts"
+        ></ion-searchbar>
+      </ion-toolbar>
+      <ion-list class="ion-no-padding">
+        <div v-if="searchText === ''">
+          <ion-list-header class="ion-no-padding">Note to Self</ion-list-header>
+
+          <ion-item button class="ion-no-padding">
+            <ion-avatar
+                slot="start"
+                @click="router.push(`/profile/${store.getters.myOwnerId}`)"
+            >
+              <img :src="getUserAvatar(store.getters.myOwnerId)" />
+            </ion-avatar>
+            <ion-label
+                @click="router.push(`/conversation/${store.getters.myOwnerId}`)"
+            >
+              <h2>{{ getUserLabel(store.getters.myOwnerId) }}</h2>
+              <h3>
+                {{ getUserDisplayName(store.getters.myOwnerId) }}
+              </h3>
+              <p>Write a note to myself</p>
+            </ion-label>
+          </ion-item>
+        </div>
+        <div v-if="searchText === ''">
+          <ion-list-header class="ion-no-padding"> My Friends </ion-list-header>
+
+          <ion-item
+              v-for="contact in getMyFriends"
+              :key="contact.id.toString()"
+              button
+              class="ion-no-padding"
+          >
+            <ion-avatar
+                slot="start"
+                @click="
+                router.push(`/profile/${contact.data.toUserId.toString()}`)
+              "
+            >
+              <img :src="getUserAvatar(contact.data.toUserId.toString())" />
+            </ion-avatar>
+            <ion-label
+                @click="
+                router.push(`/conversation/${contact.data.toUserId.toString()}`)
+              "
+            >
+              <h2>{{ getUserLabel(contact.data.toUserId.toString()) }}</h2>
+              <h3>
+                {{ getUserDisplayName(contact.data.toUserId.toString()) }}
+              </h3>
+              <p>
+                {{ getUserPublicMessage(contact.data.toUserId.toString()) }}
+              </p>
+            </ion-label>
+          </ion-item>
+        </div>
+        <div v-if="searchText === ''">
+          <ion-list-header class="ion-no-padding">
+            Suggested Friends
+          </ion-list-header>
+          <ion-item
+              class="ion-no-padding"
+              v-for="contact in getSuggestedFriends"
+              :key="contact.id"
+              button
+          >
+            <ion-avatar
+                slot="start"
+                @click="
+                router.push(`/profile/${contact.data.toUserId.toString()}`)
+              "
+            >
+              <img :src="getUserAvatar(contact.data.toUserId.toString())" />
+            </ion-avatar>
+            <ion-label
+                @click="
+                router.push(`/conversation/${contact.data.toUserId.toString()}`)
+              "
+            >
+              <h2
+                  class="
+                  flex
+                  ion-align-items-center ion-justify-content-between ion-nowrap
+                "
+              >
+                {{ getUserLabel(contact.data.toUserId.toString()) }}
+                <div class="flex ion-nowrap ion-align-items-center">
+                  <span class="social-count">
+                    {{ contact._socialMetrics.count }}
+                    <ion-icon
+                        :icon="people"
+                        color="tertiary"
+                        class="social-icon"
+                    ></ion-icon>
+                  </span>
+                </div>
+              </h2>
+              <h3>
+                {{ getUserDisplayName(contact.data.toUserId.toString()) }}
+              </h3>
+              <p>
+                {{ getUserPublicMessage(contact.data.toUserId.toString()) }}
+              </p>
+            </ion-label>
+          </ion-item>
+        </div>
+        <ion-list-header class="ion-no-padding"> Everyone </ion-list-header>
+
+        <ion-item
+            v-for="contact in contacts"
+            :key="contact.$id"
+            button
+            class="ion-no-padding"
+        >
+          <ion-avatar
+              slot="start"
+              @click="router.push(`/profile/${contact.$ownerId}`)"
+          >
+            <img :src="getUserAvatar(contact.$ownerId)" />
+          </ion-avatar>
+          <ion-label @click="router.push(`/conversation/${contact.$ownerId}`)">
+            <h2>{{ getUserLabel(contact.$ownerId) }}</h2>
+            <h3>
+              {{ getUserDisplayName(contact.$ownerId) }}
+            </h3>
+            <p>
+              {{ getUserPublicMessage(contact.$ownerId) }}
+            </p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+
+      <ion-infinite-scroll
+          @ionInfinite="loadScrollData($event)"
+          threshold="100px"
+          id="infinite-scroll"
+          :disabled="disableInfiniteScroll"
+      >
+        <ion-infinite-scroll-content
+            loading-spinner="bubbles"
+            loading-text="Finding more Friends..."
+        >
+        </ion-infinite-scroll-content>
+      </ion-infinite-scroll>
+    </ion-content>
+  </ion-page>
+</template>
 <style scoped>
 .social-count {
   display: flex;

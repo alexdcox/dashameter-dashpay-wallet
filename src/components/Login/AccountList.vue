@@ -1,94 +1,44 @@
-<template>
-  <ion-list class="ion-no-padding">
-    <ion-list-header class="accounts ion-no-padding ion-align-items-center"
-      >Accounts</ion-list-header
-    >
-    <!-- <ion-modal
-      :is-open="isAccountItemOpen"
-      @didDismiss="showAccountItem(false)"
-    > -->
-    <AccountItem
-      v-for="account in accounts"
-      :key="account.encMnemonic"
-      :account="account"
-      :areProfilesLoading="areProfilesLoading"
-      @click="$emit('selectAccount', account)"
-    />
-    <!-- </ion-modal> -->
-  </ion-list>
-</template>
-
 <script lang="ts">
-import { onMounted, onActivated, onRenderTriggered, ref } from "vue";
-
-import { useRouter } from "vue-router";
-
-import { IonList, IonListHeader } from "@ionic/vue";
-
-import { getAccounts } from "@/lib/helpers/AccountStorage";
-
+import {onMounted, ref} from "vue";
+import {useRouter} from "vue-router";
+import {IonList, IonListHeader} from "@ionic/vue";
+import AccountStorage, {LocalAccount} from "@/lib/helpers/AccountStorage";
 import AccountItem from "./AccountItem.vue";
-import { useStore } from "vuex";
-import { getClientOpts, initClient, getClient } from "@/lib/DashClient";
+import {useStore} from "vuex";
 
 export default {
   name: "AccountList",
-  components: {
-    IonList,
-    AccountItem,
-    IonListHeader,
-    // IonModal,
-  },
+  components: {IonList, AccountItem, IonListHeader},
   setup() {
     const router = useRouter();
-    const isAccountItemOpen = ref(false);
-
-    const showAccountItem = async (state = true) => {
-      isAccountItemOpen.value = state;
-    };
-
-    const accounts = ref([]);
-
-    const areProfilesLoading = ref(true);
-
     const store = useStore();
 
-    const refreshAccountList = async () => {
-      accounts.value = await getAccounts();
-
-      if (accounts.value === null) {
-        router.replace("/welcome");
-        return;
-      }
-
-      const ownerIds = Object.entries(accounts.value)
-        .filter((x: any) => (x[1] as any).accountDPNS?.$ownerId)
-        .map((x: any) => (x[1] as any).accountDPNS.$ownerId);
-
-      console.log("account ownerIds", ownerIds);
-
-      await store.dispatch("fetchDashpayProfiles", {
-        ownerIds,
-        forceRefresh: true,
-      });
-      areProfilesLoading.value = false;
-    };
+    const isAccountItemOpen = ref(false);
+    const accounts = ref<LocalAccount[]>();
+    const areProfilesLoading = ref(true);
 
     onMounted(async () => {
       // TODO onMounted is not called after signing up a new account and open the the account switcher via the avatar menu
       console.log("AccountList onMounted");
+      await refreshAccountList()
+    })
 
-      try {
-        getClient();
-      } catch (e) {
-        // If no client is initialized, init one without a wallet so we can fetch the dashpayProfiles
-        const clientOpts = getClientOpts(undefined);
-        await initClient(clientOpts);
+    const showAccountItem = async (state = true) => {
+      isAccountItemOpen.value = state;
+    }
+
+    const refreshAccountList = async () => {
+      const accountList = await AccountStorage.list()
+      if (!accountList.length) {
+        return await router.replace("/welcome");
       }
-
-      refreshAccountList();
-    });
-
+      accounts.value = accountList
+      console.log('accounts:', accountList)
+      const ownerIds = accounts.value.map((x: LocalAccount) => x.identityId).filter(id => id !== undefined)
+      console.log("account ownerIds", ownerIds);
+      await store.dispatch("fetchDashpayProfiles", {ownerIds, forceRefresh: true});
+      areProfilesLoading.value = false;
+    }
     return {
       accounts,
       isAccountItemOpen,
@@ -98,6 +48,25 @@ export default {
   },
 };
 </script>
+
+<template>
+  <ion-list class="ion-no-padding">
+    <ion-list-header class="accounts ion-no-padding ion-align-items-center">
+      Accounts
+    </ion-list-header>
+    <!-- <ion-modal
+      :is-open="isAccountItemOpen"
+      @didDismiss="showAccountItem(false)"
+    > -->
+    <AccountItem
+        v-for="account in accounts"
+        :key="account.encMnemonic"
+        :account="account"
+        :areProfilesLoading="areProfilesLoading"
+        @click="$emit('selectAccount', account)"/>
+    <!-- </ion-modal> -->
+  </ion-list>
+</template>
 
 <style scoped>
 .accounts {

@@ -3,11 +3,13 @@
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start"
-          ><ion-back-button
-            style="color: #6c69fc"
-            :icon="arrowBack"
+        >
+          <ion-back-button
+              style="color: #6c69fc"
+              :icon="arrowBack"
           ></ion-back-button
-        ></ion-buttons>
+          >
+        </ion-buttons>
         <ion-title class="headername">Redeem Invite</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -21,11 +23,11 @@
               {{ myDashBalance }} Dash
             </h1>
             <h1
-              v-if="myDashBalance < SIGNUP_FEE"
-              text-uppercase
-              no-padding
-              no-margin
-              class="mediumdescription"
+                v-if="myDashBalance < SIGNUP_FEE"
+                text-uppercase
+                no-padding
+                no-margin
+                class="mediumdescription"
             >
               Redeeming invite code...
             </h1>
@@ -40,12 +42,12 @@
     <ion-footer class="ion-no-border">
       <ion-toolbar>
         <ion-chip
-          expand="block"
-          class="nextbutton next-color ion-padding-horizontal"
-          :disabled="myDashBalance < SIGNUP_FEE"
-          @click="() => router.push('/finishregistration')"
-          ><span class="next-text">Create Account</span></ion-chip
-        >
+            expand="block"
+            class="nextbutton next-color ion-padding-horizontal"
+            :disabled="myDashBalance < SIGNUP_FEE"
+            @click="() => router.push('/finishregistration')">
+          <span class="next-text">Create Account</span>
+        </ion-chip>
       </ion-toolbar>
     </ion-footer>
   </ion-page>
@@ -54,12 +56,12 @@
 <script lang="ts">
 import useWallet from "@/composables/wallet";
 
-import { onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import {onMounted, onUnmounted, ref} from "vue";
+import {useRouter} from "vue-router";
 
 import axios from "axios";
 
-import { arrowBack } from "ionicons/icons";
+import {arrowBack} from "ionicons/icons";
 
 import {
   IonPage,
@@ -76,7 +78,7 @@ import {
   IonFooter,
 } from "@ionic/vue";
 
-import { getClient } from "@/lib/DashClient";
+import Dash from "@/lib/Dash";
 
 // import { Client } from "dash/dist/src/SDK/Client/index";
 
@@ -98,50 +100,28 @@ export default {
   },
   setup() {
     const SIGNUP_FEE = 0.01;
-
-    const { myDashBalance, startRefreshWalletDataLoop } = useWallet();
+    const {myDashBalance, startRefreshWalletDataLoop, stopRefreshWalletDataLoop} = useWallet();
     startRefreshWalletDataLoop();
-
-    const client = getClient();
-
     const router = useRouter();
-
     const isRedeemed = ref(false);
 
     const redeemInvite = async () => {
-      const address = client.account?.getUnusedAddress().address;
-
+      const account = await Dash.account()
+      const address = account?.getUnusedAddress().address;
       console.log("Redeem invite to address: ", address);
 
-      const reqs = [];
+      // TODO: There isn't any auto-faucet stuff any more.
+      // Just display the address and wait for them to top it up...
 
-      const envRun = process.env.VUE_APP_ENV_RUN || "";
-
-      if (["testnet", "build_testnet"].includes(envRun)) {
-        reqs.push(
-          axios.get(`http://autofaucet-1.dashevo.io:5050/drip/${address}`)
-        );
-        // reqs.push(axios.get(`http://autofaucet-2.dashevo.io:5050/drip/${address}`))
-      } else {
-        reqs.push(axios.get(`${process.env.VUE_APP_AUTOFAUCET}${address}`));
-      }
-
-      console.log(
-        "`${process.env.VUE_APP_AUTOFAUCET}${address}`  :>> ",
-        `${process.env.VUE_APP_AUTOFAUCET}${address}`
-      );
-      console.log("reqs :>> ", reqs);
-
-      const result = await Promise.race(reqs);
-      console.log("... faucet dropped.", result, ...reqs);
-      return;
+      return
     };
 
     onMounted(async () => {
-      console.log("hello");
       await redeemInvite(); // TODO reenable
       isRedeemed.value = true;
     });
+
+    onUnmounted(stopRefreshWalletDataLoop)
 
     return {
       myDashBalance,
@@ -171,6 +151,7 @@ export default {
   flex-grow: 0;
   margin: 0px 4px;
 }
+
 .bigdescription {
   font-style: normal;
   font-weight: 600;
@@ -180,6 +161,7 @@ export default {
   margin: auto;
   text-align: center;
 }
+
 .create {
   text-transform: capitalize;
   font-style: normal;
@@ -188,6 +170,7 @@ export default {
   line-height: 17px;
   text-align: center;
 }
+
 .align {
   display: flex;
   justify-content: center;

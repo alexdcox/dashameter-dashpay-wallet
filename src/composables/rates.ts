@@ -2,9 +2,10 @@ import axios from "axios";
 import { strict as assert } from "assert";
 import { useStore } from "vuex";
 import { computed } from "vue";
-import { Storage } from "@capacitor/storage";
+import { Preferences } from "@capacitor/preferences";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const Dashcore = require("@dashevo/dashcore-lib");
+// const Dashcore = require("@dashevo/dashcore-lib");
+import * as Dashcore from '@dashevo/dashcore-lib'
 const Unit = Dashcore.Unit;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -82,15 +83,11 @@ export default function useRates() {
   }
 
   async function startRefreshRatesLoop() {
-    assert(
-      !isRefreshLoopActive,
-      "Error: refreshRatesLoop refresh loop already running!"
-    );
-
+    if (isRefreshLoopActive) return
     isRefreshLoopActive = true;
 
     const fiatSymbol = (
-      await Storage.get({
+      await Preferences.get({
         key: `fiatSymbol_${store.getters.myLabel}`,
       })
     ).value;
